@@ -11,21 +11,20 @@
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; z-index: 10; }
         .pointer-auto { pointer-events: auto; }
 
-        /* HUD STYLES */
+        /* HUD */
         .hud {
-            background: rgba(10, 5, 0, 0.85);
+            background: rgba(10, 5, 0, 0.9);
             border: 2px solid #ffd700;
             color: #ffd700;
             padding: 15px; margin: 20px;
             border-radius: 8px;
             text-align: center;
             box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            transition: all 0.3s;
+            transition: 0.3s;
         }
 
-        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px currentColor; }
-        .stat-row { font-size: 0.9rem; margin-top: 5px; opacity: 0.8; }
+        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px #ffd700; }
+        .stat-row { font-size: 0.9rem; margin-top: 5px; color: #aaa; }
 
         /* BUTTONS */
         .btn {
@@ -33,22 +32,13 @@
             border: 1px solid #ffd700; color: #ffd700;
             padding: 12px 25px; cursor: pointer; font-weight: bold;
             text-transform: uppercase; border-radius: 4px;
-            margin: 5px; transition: 0.2s; font-size: 0.9rem;
+            margin: 5px; transition: 0.2s; font-size: 1rem;
         }
         .btn:hover { background: #ffd700; color: #000; box-shadow: 0 0 20px #ffd700; transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
         
         .btn-red { border-color: #ff3d00; color: #ff3d00; background: #300; }
         .btn-red:hover { background: #ff3d00; color: #fff; }
-
-        /* THEME OVERRIDES */
-        body.theme-cyber .hud { border-color: #00f3ff; color: #00f3ff; background: rgba(0, 10, 20, 0.9); }
-        body.theme-cyber .btn { border-color: #00f3ff; color: #00f3ff; background: #000; }
-        body.theme-cyber .btn:hover { background: #00f3ff; color: #000; box-shadow: 0 0 20px #00f3ff; }
-
-        body.theme-magma .hud { border-color: #ff5722; color: #ff5722; background: rgba(20, 5, 0, 0.9); }
-        body.theme-magma .btn { border-color: #ff5722; color: #ff5722; background: #200; }
-        body.theme-magma .btn:hover { background: #ff5722; color: #fff; box-shadow: 0 0 20px #ff5722; }
 
         /* MODALS */
         .modal-overlay {
@@ -60,25 +50,23 @@
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
         .modal-box {
-            background: #050505; border: 4px solid #ffd700;
+            background: #111; border: 4px solid #ffd700;
             padding: 40px; text-align: center; max-width: 500px;
-            box-shadow: 0 0 80px rgba(255, 165, 0, 0.2);
+            box-shadow: 0 0 50px rgba(255, 165, 0, 0.2);
             position: relative;
         }
-        body.theme-cyber .modal-box { border-color: #00f3ff; box-shadow: 0 0 80px rgba(0, 243, 255, 0.2); }
-        body.theme-magma .modal-box { border-color: #ff5722; box-shadow: 0 0 80px rgba(255, 87, 34, 0.2); }
 
         /* LOADING SCREEN */
         #loader { opacity: 1; pointer-events: auto; z-index: 200; background: #000; color: #ffd700; flex-direction: column; }
         
         /* UNDO BAR */
         #undo-wrapper { width: 100%; height: 6px; background: #333; margin-top: 10px; border-radius: 3px; overflow: hidden; display: none; }
-        #undo-progress { width: 100%; height: 100%; background: currentColor; transition: width 4s linear; }
+        #undo-progress { width: 100%; height: 100%; background: #ffd700; transition: width 4s linear; }
 
         #hint { position: absolute; bottom: 10px; right: 10px; color: rgba(255,255,255,0.3); font-size: 0.8rem; }
     </style>
     
-    <!-- LIBRARIES (CDN) -->
+    <!-- LIBRARIES (Stable Global Build) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -94,15 +82,16 @@
     <!-- LOADING SCREEN -->
     <div id="loader" class="modal-overlay active">
         <h1 style="font-size: 2.5rem; margin-bottom: 20px;">BAGH CHAL 7D</h1>
-        <div style="color:#888;">Initializing Procedural Engine...</div>
-        <button id="btn-enter" class="btn" style="margin-top: 30px; display: none;" onclick="enterGame()">ENTER WORLD</button>
+        <div id="loader-status" style="color:#888;">Generating Jungle Environment...</div>
+        <!-- Button is hidden initially, shown via JS -->
+        <button id="btn-start-game" class="btn" style="margin-top: 40px; font-size: 1.2rem; padding: 15px 40px; display: none;">ENTER WORLD</button>
     </div>
 
     <!-- MAIN MENU -->
     <div id="menu-screen" class="modal-overlay">
         <div class="modal-box">
             <h1 style="font-size: 2rem; margin-bottom: 10px;">MAIN MENU</h1>
-            <p style="color:#aaa; margin-bottom: 30px;">Strategy of the Wild</p>
+            <p style="color:#aaa; margin-bottom: 30px;">Defend the Herd or Hunt for Survival</p>
             
             <button class="btn" onclick="startGame('friend')">⚔️ Vs Friend</button>
             <button class="btn" onclick="startGame('computer')">🤖 Vs Computer</button>
@@ -127,12 +116,12 @@
         <div class="hud hud-bottom pointer-auto">
             <div id="msg-txt" style="font-weight: bold; font-size: 1.2rem;">PLACE A GOAT</div>
             <div id="undo-wrapper"><div id="undo-progress"></div></div>
-            <button id="btn-undo" class="btn" style="display:none; width: 100%; margin-top:5px;" onclick="performUndo()">UNDO MOVE</button>
+            <button id="btn-undo" class="btn" style="display:none; width: 100%; margin-top: 5px;" onclick="performUndo()">UNDO MOVE</button>
         </div>
         <div id="hint">Rotate: Drag | Zoom: Scroll</div>
     </div>
 
-    <!-- OVERLAYS (Rules, Online, Stats) -->
+    <!-- OVERLAYS -->
     <div id="rules-screen" class="modal-overlay">
         <div class="modal-box" style="text-align: left;">
             <h2>RULES</h2>
@@ -175,36 +164,56 @@
         let pieces=[], clickTargets=[], particles=[];
         let raycaster, mouse;
         let selectedIdx=null, isAnimating=false;
-        
-        // State
         let undoTimer=null, historyStack=null;
         let currentTheme = 'jungle';
 
-        // THEMES CONFIG
         const THEMES = {
             jungle: { bg: 0x050505, fog: 0x050505, board: 0x3e2723, line: 0xffd700, tiger: 0xff6f00, goat: 0xeeeeee },
             cyber:  { bg: 0x000000, fog: 0x000000, board: 0x111111, line: 0x00f3ff, tiger: 0xff003c, goat: 0x00f3ff },
             magma:  { bg: 0x1a0500, fog: 0x1a0500, board: 0x200500, line: 0xff5722, tiger: 0xffab91, goat: 0x5d4037 }
         };
 
-        // --- 1. INITIALIZATION ---
-        window.onload = function() {
-            // Pre-init 3D engine behind the loader
-            init3D();
-            // Show enter button when ready
-            document.getElementById('btn-enter').style.display='inline-block';
-        };
+        // --- 1. INITIALIZATION SEQUENCE ---
+        
+        // Wait for page load
+        window.addEventListener('load', function() {
+            // Initialize 3D immediately
+            try {
+                if(typeof THREE === 'undefined') throw new Error("3D Engine failed to load. Check internet.");
+                init3D();
+                
+                // Show Button
+                const btn = document.getElementById('btn-start-game');
+                btn.style.display = 'inline-block';
+                document.getElementById('loader-status').innerText = "System Ready";
+                
+                // Add Click Listener
+                btn.onclick = function() {
+                    document.getElementById('loader').classList.remove('active');
+                    document.getElementById('menu-screen').classList.add('active');
+                    playSound('sfx-bgm', 0.2);
+                    resetGame(true); // Quiet reset
+                };
+            } catch(e) {
+                document.getElementById('loader-status').innerText = "Error: " + e.message;
+                document.getElementById('loader-status').style.color = "red";
+            }
+        });
 
-        window.enterGame = function() {
-            document.getElementById('loader').classList.remove('active');
-            document.getElementById('menu-screen').classList.add('active');
-            playSound('sfx-bgm', 0.2);
-            // Reset board visually for menu background
-            resetGame(true);
-        };
+        function playSound(id, vol=1) {
+            try {
+                const s = document.getElementById(id);
+                s.volume = vol;
+                if(s.paused) s.play().catch(e => {}); // Ignore play-before-interact errors
+                else s.currentTime = 0;
+            } catch(e){}
+        }
 
         function init3D() {
             scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050505);
+            scene.fog = new THREE.FogExp2(0x050505, 0.02);
+
             camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
             camera.position.set(0, 18, 14);
             camera.lookAt(0,0,0);
@@ -228,16 +237,14 @@
             animate();
         }
 
-        // --- 2. THEMES & ENVIRONMENT ---
+        // --- 2. ENVIRONMENT & THEMES ---
         window.cycleTheme = function() {
             const keys = Object.keys(THEMES);
             let idx = keys.indexOf(currentTheme);
             currentTheme = keys[(idx+1)%keys.length];
             document.getElementById('lbl-theme').innerText = currentTheme.toUpperCase();
-            document.body.className = `theme-${currentTheme}`;
-            
             applyTheme(currentTheme);
-            // Re-render board and pieces
+            // Re-render
             createEnvironment();
             pieces.forEach(p=>{if(p) scene.remove(p.mesh)});
             pieces = new Array(25).fill(null);
@@ -250,27 +257,20 @@
             scene.fog = new THREE.FogExp2(t.fog, 0.02);
             
             // Lighting Reset
-            scene.children = scene.children.filter(o => !o.isLight); // Remove old lights
+            scene.children = scene.children.filter(o => !o.isLight); 
             
-            const ambient = new THREE.AmbientLight(0xffffff, key==='cyber'?0.2:0.4);
-            scene.add(ambient);
+            scene.add(new THREE.AmbientLight(0xffffff, key==='cyber'?0.2:0.4));
 
             if(key === 'cyber') {
                 const pLight = new THREE.PointLight(t.line, 2, 40);
-                pLight.position.set(0, 10, 0);
-                scene.add(pLight);
+                pLight.position.set(0, 10, 0); scene.add(pLight);
             } else if (key === 'magma') {
                 const dLight = new THREE.DirectionalLight(0xff5722, 1.5);
-                dLight.position.set(10, 10, 5); dLight.castShadow=true;
-                scene.add(dLight);
-                const glow = new THREE.PointLight(0xff0000, 1, 20);
-                glow.position.set(0,2,0); scene.add(glow);
+                dLight.position.set(10, 10, 5); dLight.castShadow=true; scene.add(dLight);
             } else {
-                // Jungle
                 const dLight = new THREE.DirectionalLight(0xffd700, 1.5);
-                dLight.position.set(10, 20, 10); dLight.castShadow=true;
-                dLight.shadow.mapSize.width=2048; dLight.shadow.mapSize.height=2048;
-                scene.add(dLight);
+                dLight.position.set(10, 20, 10); dLight.castShadow=true; 
+                dLight.shadow.mapSize.width=2048; dLight.shadow.mapSize.height=2048; scene.add(dLight);
                 const spot = new THREE.SpotLight(0xffaa00, 1);
                 spot.position.set(0, 15, 0); scene.add(spot);
             }
@@ -278,7 +278,6 @@
         }
 
         function createEnvironment() {
-            // Clear old board
             const old = scene.getObjectByName('boardGroup');
             if(old) scene.remove(old);
 
@@ -318,11 +317,10 @@
             clickTargets = [];
             for(let i=0; i<25; i++) {
                 let p = getCoord(i);
-                // Visual Stud
+                // Visible Stud
                 const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.1,16), new THREE.MeshBasicMaterial({color: t.line}));
                 stud.position.set(p.x, 0.05, p.z);
                 group.add(stud);
-                
                 // Invisible Hitbox
                 const hit = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,0.5), new THREE.MeshBasicMaterial({visible:false}));
                 hit.position.set(p.x, 0, p.z);
@@ -343,27 +341,22 @@
                 
                 const t = THEMES[currentTheme];
                 const col = type===TIGER ? t.tiger : t.goat;
-                
-                // Materials
                 const mat = currentTheme==='cyber' 
                     ? new THREE.MeshStandardMaterial({color: col, emissive: col, emissiveIntensity: 0.5})
                     : new THREE.MeshStandardMaterial({color: col, roughness: 0.5});
 
-                // Body
                 const bGeo = type===TIGER ? new THREE.BoxGeometry(1.2, 0.7, 1.6) : new THREE.BoxGeometry(0.8, 0.6, 1.0);
                 const body = new THREE.Mesh(bGeo, mat);
                 body.position.y = type===TIGER?0.8:0.6;
                 body.castShadow=true;
                 this.mesh.add(body);
 
-                // Head
                 const hGeo = type===TIGER ? new THREE.BoxGeometry(0.9, 0.8, 0.9) : new THREE.BoxGeometry(0.5, 0.5, 0.6);
                 const head = new THREE.Mesh(hGeo, mat);
                 head.position.set(0, type===TIGER?1.4:1.1, type===TIGER?0.8:0.6);
                 head.castShadow=true;
                 this.mesh.add(head);
 
-                // Legs
                 this.addLegs(mat, type===TIGER?0.3:0.2, type===TIGER?0.8:0.6);
                 
                 const p = getCoord(idx);
@@ -386,10 +379,7 @@
             update(t) {
                 if(this.isWalking) {
                     const s=15;
-                    this.legs[0].rotation.x = Math.sin(t*s)*0.6;
-                    this.legs[1].rotation.x = Math.cos(t*s)*0.6;
-                    this.legs[2].rotation.x = Math.cos(t*s)*0.6;
-                    this.legs[3].rotation.x = Math.sin(t*s)*0.6;
+                    this.legs.forEach((l,i) => l.rotation.x = Math.sin(t*s + (i%2)*Math.PI)*0.6);
                     this.mesh.position.y = Math.abs(Math.sin(t*s*2))*0.2;
                 } else {
                     this.mesh.position.y = 0;
@@ -408,7 +398,7 @@
             gameMode = mode;
             document.getElementById('menu-screen').classList.remove('active');
             document.getElementById('ui-layer').style.display='flex';
-            resetGame();
+            resetGame(false);
         }
 
         window.showMenu = function() {
@@ -417,12 +407,10 @@
         }
 
         function resetGame(quiet=false) {
-            // Clear Board
             board.fill(EMPTY);
             pieces.forEach(p=>{if(p) scene.remove(p.mesh)});
             pieces = new Array(25).fill(null);
             
-            // Set Tigers corners
             [0,4,20,24].forEach(i=>{
                 board[i]=TIGER;
                 pieces[i]=new Animal(TIGER, i);
@@ -435,6 +423,9 @@
 
         function onMouseDown(e) {
             if(isAnimating) return;
+            // Only interact if HUD is visible
+            if(document.getElementById('ui-layer').style.display === 'none') return;
+            
             mouse.x = (e.clientX/window.innerWidth)*2-1;
             mouse.y = -(e.clientY/window.innerHeight)*2+1;
             raycaster.setFromCamera(mouse, camera);
@@ -482,7 +473,6 @@
 
         function act(from, to, type, mid=null) {
             isAnimating=true; highlight(null);
-            // Undo Save
             historyStack = { board:[...board], turn, phase, goatsPlaced, goatsDead };
             
             if(type==='place') {
@@ -540,11 +530,8 @@
 
         function endTurn() {
             // Check Win Conditions
-            // 1. Tigers win if 5 goats dead
             if(goatsDead >= 5) { gameOver("TIGERS WIN!"); return; }
             
-            // 2. Goats win if tigers trapped
-            // Trap Check Logic: Only run if there are tigers on board
             let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
             if(tigers.length > 0) {
                 let trapped = true;
@@ -554,12 +541,7 @@
                     for(let i=0; i<25; i++) if(board[i]===EMPTY && getJump(t,i)!==-1) canMove=true;
                     if(canMove) trapped=false;
                 });
-
-                if(trapped) { 
-                    playSound('sfx-win');
-                    gameOver("GOATS WIN!"); 
-                    return; 
-                }
+                if(trapped) { playSound('sfx-win'); gameOver("GOATS WIN!"); return; }
             }
 
             turn = turn==='goat'?'tiger':'goat';
@@ -575,13 +557,11 @@
             let s = JSON.parse(localStorage.getItem('bcStats'))||{t:0,g:0};
             if(msg.includes('TIGER')) s.t++; else s.g++;
             localStorage.setItem('bcStats', JSON.stringify(s));
-            alert(msg);
-            showMenu();
+            setTimeout(() => { alert(msg); showMenu(); }, 500);
         }
 
         function aiMove() {
             let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
-            // Capture
             for(let t of tigers) {
                 for(let i=0; i<25; i++) {
                     if(board[i]===EMPTY) {
@@ -590,7 +570,6 @@
                     }
                 }
             }
-            // Move
             let moves=[];
             for(let t of tigers) getAdj(t).forEach(n=>{if(board[n]===EMPTY) moves.push({f:t, t:n})});
             if(moves.length>0) {
@@ -633,7 +612,7 @@
             document.getElementById('cnt-dead').innerText=goatsDead;
         }
 
-        // UI Helpers
+        // --- OVERLAY HANDLERS ---
         window.showOnline = function() { document.getElementById('online-screen').classList.add('active'); }
         window.showStats = function() {
             let s=JSON.parse(localStorage.getItem('bcStats'))||{t:0,g:0};
