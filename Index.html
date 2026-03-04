@@ -3,28 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Bagh Chal: Jungle 7D</title>
+    <title>Bagh Chal: Ultimate 7D</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
-        /* --- UI STYLES --- */
+        /* --- UI LAYER --- */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; z-index: 10; }
         .pointer-auto { pointer-events: auto; }
 
-        /* HUD */
+        /* HUD STYLES */
         .hud {
-            background: rgba(10, 5, 0, 0.9);
+            background: rgba(10, 5, 0, 0.85);
             border: 2px solid #ffd700;
             color: #ffd700;
             padding: 15px; margin: 20px;
             border-radius: 8px;
             text-align: center;
             box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            transition: 0.3s;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
         }
 
-        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px #ffd700; }
-        .stat-row { font-size: 0.9rem; margin-top: 5px; color: #aaa; }
+        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px currentColor; }
+        .stat-row { font-size: 0.9rem; margin-top: 5px; opacity: 0.8; }
 
         /* BUTTONS */
         .btn {
@@ -32,12 +33,22 @@
             border: 1px solid #ffd700; color: #ffd700;
             padding: 12px 25px; cursor: pointer; font-weight: bold;
             text-transform: uppercase; border-radius: 4px;
-            margin: 5px; transition: 0.2s; font-size: 1rem;
+            margin: 5px; transition: 0.2s; font-size: 0.9rem;
         }
         .btn:hover { background: #ffd700; color: #000; box-shadow: 0 0 20px #ffd700; transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
+        
         .btn-red { border-color: #ff3d00; color: #ff3d00; background: #300; }
         .btn-red:hover { background: #ff3d00; color: #fff; }
+
+        /* THEME OVERRIDES */
+        body.theme-cyber .hud { border-color: #00f3ff; color: #00f3ff; background: rgba(0, 10, 20, 0.9); }
+        body.theme-cyber .btn { border-color: #00f3ff; color: #00f3ff; background: #000; }
+        body.theme-cyber .btn:hover { background: #00f3ff; color: #000; box-shadow: 0 0 20px #00f3ff; }
+
+        body.theme-magma .hud { border-color: #ff5722; color: #ff5722; background: rgba(20, 5, 0, 0.9); }
+        body.theme-magma .btn { border-color: #ff5722; color: #ff5722; background: #200; }
+        body.theme-magma .btn:hover { background: #ff5722; color: #fff; box-shadow: 0 0 20px #ff5722; }
 
         /* MODALS */
         .modal-overlay {
@@ -49,32 +60,32 @@
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
         .modal-box {
-            background: #111; border: 4px solid #ffd700;
+            background: #050505; border: 4px solid #ffd700;
             padding: 40px; text-align: center; max-width: 500px;
-            box-shadow: 0 0 50px rgba(255, 165, 0, 0.2);
+            box-shadow: 0 0 80px rgba(255, 165, 0, 0.2);
+            position: relative;
         }
+        body.theme-cyber .modal-box { border-color: #00f3ff; box-shadow: 0 0 80px rgba(0, 243, 255, 0.2); }
+        body.theme-magma .modal-box { border-color: #ff5722; box-shadow: 0 0 80px rgba(255, 87, 34, 0.2); }
 
         /* LOADING SCREEN */
-        #loader { opacity: 1; pointer-events: auto; z-index: 200; background: #050505; color: #ffd700; flex-direction: column; }
+        #loader { opacity: 1; pointer-events: auto; z-index: 200; background: #000; color: #ffd700; flex-direction: column; }
         
         /* UNDO BAR */
         #undo-wrapper { width: 100%; height: 6px; background: #333; margin-top: 10px; border-radius: 3px; overflow: hidden; display: none; }
-        #undo-progress { width: 100%; height: 100%; background: #ffd700; transition: width 4s linear; }
+        #undo-progress { width: 100%; height: 100%; background: currentColor; transition: width 4s linear; }
 
-        #controls-hint {
-            position: absolute; bottom: 10px; right: 10px; 
-            color: rgba(255,255,255,0.3); font-size: 0.8rem; text-align: right;
-        }
+        #hint { position: absolute; bottom: 10px; right: 10px; color: rgba(255,255,255,0.3); font-size: 0.8rem; }
     </style>
     
-    <!-- LIBRARIES (Global Build - Fixes the stuck loading issue) -->
+    <!-- LIBRARIES (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
-<body>
+<body class="theme-jungle">
 
-    <!-- AUDIO -->
-    <audio id="sfx-bgm" loop><source src="https://cdn.pixabay.com/audio/2022/08/02/audio_884fe92c21.mp3" type="audio/mpeg"></audio> <!-- Deep Jungle -->
+    <!-- SOUNDS -->
+    <audio id="sfx-bgm" loop><source src="https://cdn.pixabay.com/audio/2022/08/02/audio_884fe92c21.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-roar" src="https://cdn.pixabay.com/audio/2022/10/16/audio_10629734ea.mp3"></audio>
     <audio id="sfx-bleat" src="https://cdn.pixabay.com/audio/2022/03/15/audio_736675271a.mp3"></audio>
     <audio id="sfx-step" src="https://cdn.pixabay.com/audio/2022/03/24/audio_33a7698572.mp3"></audio>
@@ -83,126 +94,118 @@
     <!-- LOADING SCREEN -->
     <div id="loader" class="modal-overlay active">
         <h1 style="font-size: 2.5rem; margin-bottom: 20px;">BAGH CHAL 7D</h1>
-        <div style="font-size:1rem; color:#888;">Generating Jungle Environment...</div>
-        <div id="loading-status" style="margin-top:10px; color:#4caf50;">Ready</div>
-        <button id="btn-start" class="btn" style="margin-top: 40px; font-size: 1.2rem; padding: 15px 40px;">ENTER WORLD</button>
+        <div style="color:#888;">Initializing Procedural Engine...</div>
+        <button id="btn-enter" class="btn" style="margin-top: 30px; display: none;" onclick="enterGame()">ENTER WORLD</button>
     </div>
 
     <!-- MAIN MENU -->
     <div id="menu-screen" class="modal-overlay">
         <div class="modal-box">
             <h1 style="font-size: 2rem; margin-bottom: 10px;">MAIN MENU</h1>
-            <p style="color:#aaa; margin-bottom: 30px;">Defend the Herd or Hunt for Survival</p>
+            <p style="color:#aaa; margin-bottom: 30px;">Strategy of the Wild</p>
             
-            <button class="btn" onclick="setGameMode('friend')">⚔️ Play vs Friend</button>
-            <button class="btn" onclick="setGameMode('computer')">🤖 Play vs Computer</button>
-            <button class="btn" onclick="showOnlineLobby()">🌐 Play Online</button>
+            <button class="btn" onclick="startGame('friend')">⚔️ Vs Friend</button>
+            <button class="btn" onclick="startGame('computer')">🤖 Vs Computer</button>
+            <button class="btn" onclick="showOnline()">🌐 Online</button>
             
             <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+                <button class="btn" onclick="cycleTheme()">🎨 <span id="lbl-theme">JUNGLE</span></button>
                 <button class="btn" onclick="showStats()">🏆 Stats</button>
                 <button class="btn" onclick="showRules()">📜 Rules</button>
             </div>
         </div>
     </div>
 
-    <!-- RULES -->
-    <div id="rules-screen" class="modal-overlay">
-        <div class="modal-box" style="text-align: left;">
-            <h2 style="text-align: center; color:#ffd700">GAME RULES</h2>
-            <p style="color:#ddd"><strong>🐯 TIGERS (Hunter):</strong><br>Start in corners. Move 1 step or JUMP over a goat to eat it. Win by eating 5 goats.</p>
-            <p style="color:#ddd"><strong>🐐 GOATS (Defender):</strong><br>Place 20 goats on board. Then move to block paths. Win by trapping all Tigers.</p>
-            <button class="btn" style="width:100%" onclick="document.getElementById('rules-screen').classList.remove('active')">BACK</button>
-        </div>
-    </div>
-
-    <!-- STATS -->
-    <div id="stats-screen" class="modal-overlay">
-        <div class="modal-box">
-            <h2>ACHIEVEMENTS</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;">
-                <div style="background:#222; padding:15px; border:1px solid orange;">
-                    <div style="font-size:2rem">🐯</div>
-                    <div style="color:orange">WINS: <span id="stat-tiger">0</span></div>
-                </div>
-                <div style="background:#222; padding:15px; border:1px solid white;">
-                    <div style="font-size:2rem">🐐</div>
-                    <div style="color:white">WINS: <span id="stat-goat">0</span></div>
-                </div>
-            </div>
-            <button class="btn btn-red" onclick="resetStats()">RESET DATA</button>
-            <button class="btn" onclick="document.getElementById('stats-screen').classList.remove('active')">CLOSE</button>
-        </div>
-    </div>
-    
-    <!-- ONLINE LOBBY SIMULATION -->
-    <div id="online-screen" class="modal-overlay">
-        <div class="modal-box">
-            <h2>MULTIPLAYER LOBBY</h2>
-            <p style="color:#00f3ff; margin: 30px 0;">Searching for opponents...</p>
-            <div style="margin: 0 auto; width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #ffd700; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <button class="btn btn-red" style="margin-top: 30px;" onclick="document.getElementById('online-screen').classList.remove('active')">CANCEL</button>
-        </div>
-    </div>
-
-    <!-- HUD -->
+    <!-- GAME HUD -->
     <div id="ui-layer" style="display:none;">
         <div class="hud hud-top pointer-auto">
             <h1 id="turn-txt">GOAT'S TURN</h1>
-            <div class="stat-row">Placed: <span id="cnt-placed">0</span>/20 | Dead: <span id="cnt-dead" style="color:red">0</span>/5</div>
-            <button class="btn" style="font-size: 0.8rem; padding: 5px 15px; margin-top:10px;" onclick="pauseGame()">PAUSE / MENU</button>
+            <div class="stat-row">Placed: <span id="cnt-placed">0</span>/20 | Dead: <span id="cnt-dead">0</span>/5</div>
+            <button class="btn" style="font-size: 0.8rem; padding: 5px 15px; margin-top:10px;" onclick="showMenu()">MENU</button>
         </div>
 
         <div class="hud hud-bottom pointer-auto">
-            <div id="msg-txt" style="font-weight: bold; margin-bottom: 10px; font-size: 1.2rem;">PLACE A GOAT</div>
+            <div id="msg-txt" style="font-weight: bold; font-size: 1.2rem;">PLACE A GOAT</div>
             <div id="undo-wrapper"><div id="undo-progress"></div></div>
-            <button id="btn-undo" class="btn" style="display:none; width: 100%; margin-top: 5px;" onclick="performUndo()">UNDO MOVE</button>
+            <button id="btn-undo" class="btn" style="display:none; width: 100%; margin-top:5px;" onclick="performUndo()">UNDO MOVE</button>
         </div>
+        <div id="hint">Rotate: Drag | Zoom: Scroll</div>
+    </div>
 
-        <div id="controls-hint">Rotate: Drag | Zoom: Scroll</div>
+    <!-- OVERLAYS (Rules, Online, Stats) -->
+    <div id="rules-screen" class="modal-overlay">
+        <div class="modal-box" style="text-align: left;">
+            <h2>RULES</h2>
+            <p style="color:#ccc"><strong>🐯 TIGERS:</strong> Start at corners. Move 1 step or JUMP over a goat to capture. Win by eating 5 goats.</p>
+            <p style="color:#ccc"><strong>🐐 GOATS:</strong> Place 20 units. Surround Tigers to trap them. Win if Tigers can't move.</p>
+            <button class="btn" style="width:100%" onclick="document.getElementById('rules-screen').classList.remove('active')">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="online-screen" class="modal-overlay">
+        <div class="modal-box">
+            <h2>ONLINE LOBBY</h2>
+            <p style="color:#00f3ff; margin:30px 0;">Searching for opponents...</p>
+            <div style="width:40px; height:40px; border:4px solid #333; border-top-color:currentColor; border-radius:50%; margin:0 auto; animation:spin 1s linear infinite;"></div>
+            <button class="btn btn-red" style="margin-top:30px" onclick="document.getElementById('online-screen').classList.remove('active')">CANCEL</button>
+        </div>
+    </div>
+
+    <div id="stats-screen" class="modal-overlay">
+        <div class="modal-box">
+            <h2>STATS</h2>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0;">
+                <div style="border:1px solid currentColor; padding:10px;">🐯 WINS<br><span id="st-tiger" style="font-size:1.5rem">0</span></div>
+                <div style="border:1px solid currentColor; padding:10px;">🐐 WINS<br><span id="st-goat" style="font-size:1.5rem">0</span></div>
+            </div>
+            <button class="btn btn-red" onclick="resetStats()">RESET</button>
+            <button class="btn" onclick="document.getElementById('stats-screen').classList.remove('active')">CLOSE</button>
+        </div>
     </div>
 
     <script>
-        // --- CORE GAME ENGINE ---
+        // --- GAME CONSTANTS ---
         const TIGER=2, GOAT=1, EMPTY=0;
         let board = Array(25).fill(EMPTY);
-        let turn = 'goat', phase = 1;
-        let goatsPlaced = 0, goatsDead = 0;
-        let gameMode = 'friend';
+        let turn='goat', phase=1, goatsPlaced=0, goatsDead=0;
+        let gameMode='friend';
         
+        // 3D Engine Vars
         let scene, camera, renderer, controls;
-        let pieces = [], clickTargets = [];
+        let pieces=[], clickTargets=[], particles=[];
         let raycaster, mouse;
-        let particles = [];
+        let selectedIdx=null, isAnimating=false;
         
-        let selectedIdx = null;
-        let isAnimating = false;
-        let historyStack = null, undoTimer = null;
+        // State
+        let undoTimer=null, historyStack=null;
+        let currentTheme = 'jungle';
 
-        // --- 1. SETUP & LOADING ---
-        
-        document.getElementById('btn-start').addEventListener('click', () => {
+        // THEMES CONFIG
+        const THEMES = {
+            jungle: { bg: 0x050505, fog: 0x050505, board: 0x3e2723, line: 0xffd700, tiger: 0xff6f00, goat: 0xeeeeee },
+            cyber:  { bg: 0x000000, fog: 0x000000, board: 0x111111, line: 0x00f3ff, tiger: 0xff003c, goat: 0x00f3ff },
+            magma:  { bg: 0x1a0500, fog: 0x1a0500, board: 0x200500, line: 0xff5722, tiger: 0xffab91, goat: 0x5d4037 }
+        };
+
+        // --- 1. INITIALIZATION ---
+        window.onload = function() {
+            // Pre-init 3D engine behind the loader
+            init3D();
+            // Show enter button when ready
+            document.getElementById('btn-enter').style.display='inline-block';
+        };
+
+        window.enterGame = function() {
             document.getElementById('loader').classList.remove('active');
             document.getElementById('menu-screen').classList.add('active');
-            // Init Sound Context
-            playSound('sfx-bgm', 0.3);
-            init3D();
-        });
-
-        function playSound(id, vol=1) {
-            try {
-                const s = document.getElementById(id);
-                s.volume = vol;
-                if(s.paused) s.play().catch(e => console.log("Audio waiting for interaction"));
-                else s.currentTime = 0;
-            } catch(e){}
-        }
+            playSound('sfx-bgm', 0.2);
+            // Reset board visually for menu background
+            resetGame(true);
+        };
 
         function init3D() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x050505);
-            scene.fog = new THREE.FogExp2(0x050505, 0.02);
-
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
             camera.position.set(0, 18, 14);
             camera.lookAt(0,0,0);
 
@@ -215,150 +218,182 @@
             controls.enableDamping = true;
             controls.maxPolarAngle = Math.PI/2 - 0.1;
 
-            // Lights
-            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambient);
-            
-            const dirLight = new THREE.DirectionalLight(0xffd700, 1.5);
-            dirLight.position.set(10, 20, 10);
-            dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 2048;
-            dirLight.shadow.mapSize.height = 2048;
-            scene.add(dirLight);
-
-            // Spotlight for drama
-            const spot = new THREE.SpotLight(0xff8800, 2);
-            spot.position.set(0, 15, 0);
-            spot.angle = 0.5;
-            spot.penumbra = 0.5;
-            scene.add(spot);
-
-            // Inputs
+            // Input
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
             window.addEventListener('mousedown', onMouseDown);
             window.addEventListener('resize', onResize);
 
-            createEnvironment();
+            applyTheme(currentTheme);
             animate();
         }
 
-        function createEnvironment() {
-            // Wood Board
-            const boardGeo = new THREE.BoxGeometry(16, 1, 16);
-            const boardMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.8 });
-            const boardMesh = new THREE.Mesh(boardGeo, boardMat);
-            boardMesh.position.y = -0.5;
-            boardMesh.receiveShadow = true;
-            scene.add(boardMesh);
+        // --- 2. THEMES & ENVIRONMENT ---
+        window.cycleTheme = function() {
+            const keys = Object.keys(THEMES);
+            let idx = keys.indexOf(currentTheme);
+            currentTheme = keys[(idx+1)%keys.length];
+            document.getElementById('lbl-theme').innerText = currentTheme.toUpperCase();
+            document.body.className = `theme-${currentTheme}`;
+            
+            applyTheme(currentTheme);
+            // Re-render board and pieces
+            createEnvironment();
+            pieces.forEach(p=>{if(p) scene.remove(p.mesh)});
+            pieces = new Array(25).fill(null);
+            board.forEach((v,i)=>{ if(v!==EMPTY) pieces[i]=new Animal(v, i); });
+        }
 
-            // Gold Lines
+        function applyTheme(key) {
+            const t = THEMES[key];
+            scene.background = new THREE.Color(t.bg);
+            scene.fog = new THREE.FogExp2(t.fog, 0.02);
+            
+            // Lighting Reset
+            scene.children = scene.children.filter(o => !o.isLight); // Remove old lights
+            
+            const ambient = new THREE.AmbientLight(0xffffff, key==='cyber'?0.2:0.4);
+            scene.add(ambient);
+
+            if(key === 'cyber') {
+                const pLight = new THREE.PointLight(t.line, 2, 40);
+                pLight.position.set(0, 10, 0);
+                scene.add(pLight);
+            } else if (key === 'magma') {
+                const dLight = new THREE.DirectionalLight(0xff5722, 1.5);
+                dLight.position.set(10, 10, 5); dLight.castShadow=true;
+                scene.add(dLight);
+                const glow = new THREE.PointLight(0xff0000, 1, 20);
+                glow.position.set(0,2,0); scene.add(glow);
+            } else {
+                // Jungle
+                const dLight = new THREE.DirectionalLight(0xffd700, 1.5);
+                dLight.position.set(10, 20, 10); dLight.castShadow=true;
+                dLight.shadow.mapSize.width=2048; dLight.shadow.mapSize.height=2048;
+                scene.add(dLight);
+                const spot = new THREE.SpotLight(0xffaa00, 1);
+                spot.position.set(0, 15, 0); scene.add(spot);
+            }
+            createEnvironment();
+        }
+
+        function createEnvironment() {
+            // Clear old board
+            const old = scene.getObjectByName('boardGroup');
+            if(old) scene.remove(old);
+
+            const group = new THREE.Group();
+            group.name = 'boardGroup';
+            const t = THEMES[currentTheme];
+
+            // Board Base
+            const boardGeo = new THREE.BoxGeometry(16, 1, 16);
+            const boardMat = new THREE.MeshStandardMaterial({ 
+                color: t.board, 
+                roughness: currentTheme==='cyber'?0.2:0.8,
+                metalness: currentTheme==='cyber'?0.8:0.1
+            });
+            const mesh = new THREE.Mesh(boardGeo, boardMat);
+            mesh.position.y = -0.5;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+
+            // Lines
             const points = [];
             for(let i=0; i<25; i++) {
-                getAdj(i).forEach(n => {
+                getAdj(i).forEach(n=>{
                     if(n>i) {
-                        let p1 = getCoord(i), p2 = getCoord(n);
+                        let p1=getCoord(i), p2=getCoord(n);
                         points.push(new THREE.Vector3(p1.x, 0.05, p1.z));
                         points.push(new THREE.Vector3(p2.x, 0.05, p2.z));
                     }
                 });
             }
-            const lineMat = new THREE.LineBasicMaterial({ color: 0xffd700 });
+            const lineMat = new THREE.LineBasicMaterial({ color: t.line });
             const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
             const lines = new THREE.LineSegments(lineGeo, lineMat);
-            scene.add(lines);
+            group.add(lines);
 
             // Click Targets
+            clickTargets = [];
             for(let i=0; i<25; i++) {
-                let pos = getCoord(i);
-                // Visible gold stud
-                const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1), new THREE.MeshBasicMaterial({color: 0xffd700}));
-                stud.position.set(pos.x, 0.05, pos.z);
-                scene.add(stud);
-
-                // Invisible hitbox
-                const hit = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.5), new THREE.MeshBasicMaterial({visible:false}));
-                hit.position.set(pos.x, 0, pos.z);
+                let p = getCoord(i);
+                // Visual Stud
+                const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.1,16), new THREE.MeshBasicMaterial({color: t.line}));
+                stud.position.set(p.x, 0.05, p.z);
+                group.add(stud);
+                
+                // Invisible Hitbox
+                const hit = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,0.5), new THREE.MeshBasicMaterial({visible:false}));
+                hit.position.set(p.x, 0, p.z);
                 hit.userData = { index: i };
-                scene.add(hit);
+                group.add(hit);
                 clickTargets.push(hit);
             }
+            scene.add(group);
         }
 
-        function getCoord(idx) {
-            const r=Math.floor(idx/5), c=idx%5;
-            return { x: (c-2)*3, z: (r-2)*3 };
-        }
-
-        function getAdj(i) {
-            let adj=[];
-            let r=Math.floor(i/5), c=i%5;
-            [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) adj.push(nr*5+nc)});
-            if(i%2===0) [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) adj.push(nr*5+nc)});
-            return adj;
-        }
-
-        // --- 2. ANIMAL MODELS (PROCEDURAL) ---
+        // --- 3. ANIMAL CLASS ---
         class Animal {
             constructor(type, idx) {
                 this.type = type;
                 this.mesh = new THREE.Group();
                 this.legs = [];
-                this.isWalking = false;
-                this.isDancing = false;
+                this.isWalking=false;
                 
-                const matBody = type===TIGER ? new THREE.MeshStandardMaterial({color: 0xff6f00}) : new THREE.MeshStandardMaterial({color: 0xeeeeee});
-                const matDetail = new THREE.MeshStandardMaterial({color: 0x111111}); // Stripes or Hooves
+                const t = THEMES[currentTheme];
+                const col = type===TIGER ? t.tiger : t.goat;
+                
+                // Materials
+                const mat = currentTheme==='cyber' 
+                    ? new THREE.MeshStandardMaterial({color: col, emissive: col, emissiveIntensity: 0.5})
+                    : new THREE.MeshStandardMaterial({color: col, roughness: 0.5});
 
                 // Body
-                const bodyGeo = type===TIGER ? new THREE.BoxGeometry(1.2, 0.7, 1.6) : new THREE.BoxGeometry(0.8, 0.6, 1.0);
-                const body = new THREE.Mesh(bodyGeo, matBody);
-                body.position.y = type===TIGER ? 0.8 : 0.6;
-                body.castShadow = true;
+                const bGeo = type===TIGER ? new THREE.BoxGeometry(1.2, 0.7, 1.6) : new THREE.BoxGeometry(0.8, 0.6, 1.0);
+                const body = new THREE.Mesh(bGeo, mat);
+                body.position.y = type===TIGER?0.8:0.6;
+                body.castShadow=true;
                 this.mesh.add(body);
 
                 // Head
-                const headGeo = type===TIGER ? new THREE.BoxGeometry(0.9, 0.8, 0.9) : new THREE.BoxGeometry(0.5, 0.5, 0.6);
-                const head = new THREE.Mesh(headGeo, matBody);
+                const hGeo = type===TIGER ? new THREE.BoxGeometry(0.9, 0.8, 0.9) : new THREE.BoxGeometry(0.5, 0.5, 0.6);
+                const head = new THREE.Mesh(hGeo, mat);
                 head.position.set(0, type===TIGER?1.4:1.1, type===TIGER?0.8:0.6);
-                head.castShadow = true;
+                head.castShadow=true;
                 this.mesh.add(head);
 
                 // Legs
-                this.createLegs(matBody, type===TIGER?0.3:0.2, type===TIGER?0.8:0.6);
-
-                const pos = getCoord(idx);
-                this.mesh.position.set(pos.x, 0, pos.z);
+                this.addLegs(mat, type===TIGER?0.3:0.2, type===TIGER?0.8:0.6);
+                
+                const p = getCoord(idx);
+                this.mesh.position.set(p.x, 0, p.z);
                 scene.add(this.mesh);
             }
 
-            createLegs(mat, w, h) {
-                const pos = [[-0.3, 0.5], [0.3, 0.5], [-0.3, -0.5], [0.3, -0.5]];
-                pos.forEach(p => {
+            addLegs(mat, w, h) {
+                [[ -0.3, 0.5 ], [ 0.3, 0.5 ], [ -0.3, -0.5 ], [ 0.3, -0.5 ]].forEach(pos => {
                     const leg = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat);
-                    const pivot = new THREE.Group();
-                    pivot.position.set(p[0], h, p[1]);
+                    const piv = new THREE.Group();
+                    piv.position.set(pos[0], h, pos[1]);
                     leg.position.set(0, -h/2, 0);
-                    pivot.add(leg);
-                    this.mesh.add(pivot);
-                    this.legs.push(pivot);
+                    piv.add(leg);
+                    this.mesh.add(piv);
+                    this.legs.push(piv);
                 });
             }
 
-            update(time) {
+            update(t) {
                 if(this.isWalking) {
-                    const s = 15;
-                    this.legs[0].rotation.x = Math.sin(time*s)*0.6;
-                    this.legs[1].rotation.x = Math.cos(time*s)*0.6;
-                    this.legs[2].rotation.x = Math.cos(time*s)*0.6;
-                    this.legs[3].rotation.x = Math.sin(time*s)*0.6;
-                    this.mesh.position.y = Math.abs(Math.sin(time*s*2))*0.15;
-                } else if(this.isDancing) {
-                    this.mesh.position.y = Math.abs(Math.sin(time*10))*0.8;
-                    this.mesh.rotation.y += 0.1;
+                    const s=15;
+                    this.legs[0].rotation.x = Math.sin(t*s)*0.6;
+                    this.legs[1].rotation.x = Math.cos(t*s)*0.6;
+                    this.legs[2].rotation.x = Math.cos(t*s)*0.6;
+                    this.legs[3].rotation.x = Math.sin(t*s)*0.6;
+                    this.mesh.position.y = Math.abs(Math.sin(t*s*2))*0.2;
                 } else {
                     this.mesh.position.y = 0;
-                    this.legs.forEach(l => l.rotation.x = 0);
+                    this.legs.forEach(l=>l.rotation.x=0);
                 }
             }
 
@@ -368,31 +403,34 @@
             }
         }
 
-        // --- 3. LOGIC & INPUT ---
-        window.setGameMode = function(m) {
-            gameMode = m;
+        // --- 4. GAME LOGIC ---
+        window.startGame = function(mode) {
+            gameMode = mode;
             document.getElementById('menu-screen').classList.remove('active');
-            document.getElementById('ui-layer').style.display = 'flex';
+            document.getElementById('ui-layer').style.display='flex';
             resetGame();
-        };
+        }
 
-        window.pauseGame = function() {
+        window.showMenu = function() {
             document.getElementById('menu-screen').classList.add('active');
-        };
+            document.getElementById('ui-layer').style.display='none';
+        }
 
-        function resetGame() {
+        function resetGame(quiet=false) {
+            // Clear Board
             board.fill(EMPTY);
-            pieces.forEach(p => { if(p) scene.remove(p.mesh) });
+            pieces.forEach(p=>{if(p) scene.remove(p.mesh)});
             pieces = new Array(25).fill(null);
             
-            [0,4,20,24].forEach(i => {
-                board[i] = TIGER;
-                pieces[i] = new Animal(TIGER, i);
+            // Set Tigers corners
+            [0,4,20,24].forEach(i=>{
+                board[i]=TIGER;
+                pieces[i]=new Animal(TIGER, i);
             });
 
             turn='goat'; phase=1; goatsPlaced=0; goatsDead=0;
             isAnimating=false; stopUndo();
-            updateHUD();
+            if(!quiet) updateHUD();
         }
 
         function onMouseDown(e) {
@@ -401,119 +439,95 @@
             mouse.y = -(e.clientY/window.innerHeight)*2+1;
             raycaster.setFromCamera(mouse, camera);
             const hits = raycaster.intersectObjects(clickTargets);
-            if(hits.length > 0) {
+            if(hits.length>0) {
                 const idx = hits[0].object.userData.index;
-                if(turn==='goat') handleGoat(idx);
-                else handleTiger(idx);
+                if(turn==='goat') goatInput(idx); else tigerInput(idx);
             }
         }
 
-        let highlightMesh = null;
+        let highlightMesh=null;
         function highlight(idx) {
             if(highlightMesh) { scene.remove(highlightMesh); highlightMesh=null; }
             if(idx===null) return;
-            const pos = getCoord(idx);
+            const p = getCoord(idx);
             const geo = new THREE.RingGeometry(1, 1.2, 32);
             const mat = new THREE.MeshBasicMaterial({color: 0xffff00, side: THREE.DoubleSide});
             highlightMesh = new THREE.Mesh(geo, mat);
             highlightMesh.rotation.x = -Math.PI/2;
-            highlightMesh.position.set(pos.x, 0.1, pos.z);
+            highlightMesh.position.set(p.x, 0.1, p.z);
             scene.add(highlightMesh);
         }
 
-        function handleGoat(idx) {
+        function goatInput(idx) {
             if(phase===1) {
-                if(board[idx]===EMPTY) action(null, idx, 'place');
+                if(board[idx]===EMPTY) act(null, idx, 'place');
             } else {
-                if(board[idx]===GOAT) { selectedIdx=idx; highlight(idx); playSound('sfx-step', 0.5); }
+                if(board[idx]===GOAT) { selectedIdx=idx; highlight(idx); playSound('sfx-step'); }
                 else if(board[idx]===EMPTY && selectedIdx!==null) {
-                    if(getAdj(selectedIdx).includes(idx)) action(selectedIdx, idx, 'move');
+                    if(getAdj(selectedIdx).includes(idx)) act(selectedIdx, idx, 'move');
                 }
             }
         }
 
-        function handleTiger(idx) {
-            if(board[idx]===TIGER) { selectedIdx=idx; highlight(idx); playSound('sfx-roar', 0.4); }
+        function tigerInput(idx) {
+            if(board[idx]===TIGER) { selectedIdx=idx; highlight(idx); playSound('sfx-roar', 0.5); }
             else if(board[idx]===EMPTY && selectedIdx!==null) {
-                if(getAdj(selectedIdx).includes(idx)) action(selectedIdx, idx, 'move');
+                if(getAdj(selectedIdx).includes(idx)) act(selectedIdx, idx, 'move');
                 else {
-                    let m = getJump(selectedIdx, idx);
-                    if(m!==-1) action(selectedIdx, idx, 'eat', m);
+                    let m=getJump(selectedIdx, idx);
+                    if(m!==-1) act(selectedIdx, idx, 'eat', m);
                 }
             }
         }
 
-        function getJump(f, t) {
-            let r1=Math.floor(f/5), c1=f%5, r2=Math.floor(t/5), c2=t%5;
-            let dr=r2-r1, dc=c2-c1;
-            if((Math.abs(dr)===2&&dc===0)||(Math.abs(dc)===2&&dr===0)||(Math.abs(dr)===2&&Math.abs(dc)===2)) {
-                let m = (r1+dr/2)*5 + (c1+dc/2);
-                if(getAdj(f).includes(m) && getAdj(m).includes(t) && board[m]===GOAT) return m;
-            }
-            return -1;
-        }
-
-        // --- 4. EXECUTION & ANIMATION ---
-        function action(from, to, type, mid=null) {
-            isAnimating = true;
-            highlight(null);
-            
+        function act(from, to, type, mid=null) {
+            isAnimating=true; highlight(null);
             // Undo Save
             historyStack = { board:[...board], turn, phase, goatsPlaced, goatsDead };
-
+            
             if(type==='place') {
                 board[to]=GOAT; goatsPlaced++; if(goatsPlaced===20) phase=2;
-                const anim = new Animal(GOAT, to);
-                pieces[to] = anim;
-                anim.mesh.position.y = 10; // Sky drop
-                animateMove(anim, getCoord(to), 'drop', endTurn);
+                const p = new Animal(GOAT, to);
+                pieces[to]=p;
+                p.mesh.position.y=10;
+                moveAnim(p, getCoord(to), 'drop', endTurn);
                 playSound('sfx-bleat');
-            }
-            else if(type==='move') {
+            } else if(type==='move') {
                 board[to]=board[from]; board[from]=EMPTY;
-                const p = pieces[from]; pieces[to]=p; pieces[from]=null;
+                const p=pieces[from]; pieces[to]=p; pieces[from]=null;
                 p.lookAt(to);
-                animateMove(p, getCoord(to), 'walk', endTurn);
+                moveAnim(p, getCoord(to), 'walk', endTurn);
                 playSound('sfx-step');
-            }
-            else if(type==='eat') {
+            } else if(type==='eat') {
                 board[to]=TIGER; board[from]=EMPTY; board[mid]=EMPTY;
                 goatsDead++;
-                const p = pieces[from]; pieces[to]=p; pieces[from]=null;
-                const v = pieces[mid]; pieces[mid]=null;
+                const p=pieces[from]; pieces[to]=p; pieces[from]=null;
+                const v=pieces[mid]; pieces[mid]=null;
                 p.lookAt(to);
                 playSound('sfx-roar');
-                animateMove(p, getCoord(to), 'jump', () => {
-                    spawnExplosion(v.mesh.position);
+                moveAnim(p, getCoord(to), 'jump', ()=>{
+                    explode(v.mesh.position);
                     scene.remove(v.mesh);
                     endTurn();
                 });
             }
-            selectedIdx = null;
+            selectedIdx=null;
         }
 
-        function animateMove(obj, target, mode, cb) {
+        function moveAnim(obj, target, mode, cb) {
             const start = obj.mesh.position.clone();
-            let dur = mode==='jump'?800:500;
-            if(mode==='walk') dur=600;
+            let dur = mode==='jump'?800:500; if(mode==='walk') dur=600;
             const t0 = Date.now();
-            
             obj.isWalking = (mode==='walk');
-
+            
             function loop() {
                 const p = Math.min((Date.now()-t0)/dur, 1);
-                
-                if(mode==='drop') {
-                    obj.mesh.position.y = (1-p)*10;
-                } else if(mode==='jump') {
+                if(mode==='drop') obj.mesh.position.y = (1-p)*10;
+                else {
                     obj.mesh.position.x = THREE.MathUtils.lerp(start.x, target.x, p);
                     obj.mesh.position.z = THREE.MathUtils.lerp(start.z, target.z, p);
-                    obj.mesh.position.y = Math.sin(p*Math.PI)*4; 
-                } else {
-                    obj.mesh.position.x = THREE.MathUtils.lerp(start.x, target.x, p);
-                    obj.mesh.position.z = THREE.MathUtils.lerp(start.z, target.z, p);
+                    if(mode==='jump') obj.mesh.position.y = Math.sin(p*Math.PI)*4;
                 }
-
                 if(p<1) requestAnimationFrame(loop);
                 else {
                     obj.mesh.position.set(target.x, 0, target.z);
@@ -524,80 +538,120 @@
             loop();
         }
 
-        function spawnExplosion(pos) {
-            for(let i=0; i<15; i++) {
-                const m = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), new THREE.MeshBasicMaterial({color: 0xffffff}));
-                m.position.copy(pos);
-                m.userData = { vel: new THREE.Vector3((Math.random()-0.5), Math.random(), (Math.random()-0.5)) };
-                scene.add(m);
-                particles.push(m);
-            }
-        }
-
-        // --- 5. GAME LOOP & STATE ---
         function endTurn() {
-            // Check Win
-            if(goatsDead>=5) { endGame("TIGERS WIN!"); return; }
+            // Check Win Conditions
+            // 1. Tigers win if 5 goats dead
+            if(goatsDead >= 5) { gameOver("TIGERS WIN!"); return; }
             
-            // Check Trap
+            // 2. Goats win if tigers trapped
+            // Trap Check Logic: Only run if there are tigers on board
             let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
-            let trapped = true;
-            tigers.forEach(t=>{
-                let moves = false;
-                getAdj(t).forEach(n=>{if(board[n]===EMPTY) moves=true;});
-                for(let i=0; i<25; i++) if(board[i]===EMPTY && getJump(t, i)!==-1) moves=true;
-                if(moves) trapped=false;
-            });
+            if(tigers.length > 0) {
+                let trapped = true;
+                tigers.forEach(t => {
+                    let canMove = false;
+                    getAdj(t).forEach(n=>{ if(board[n]===EMPTY) canMove=true; });
+                    for(let i=0; i<25; i++) if(board[i]===EMPTY && getJump(t,i)!==-1) canMove=true;
+                    if(canMove) trapped=false;
+                });
 
-            if(trapped) { 
-                pieces.forEach(p=>{if(p && p.type===GOAT) p.isDancing=true;});
-                playSound('sfx-win');
-                endGame("GOATS WIN!"); 
-                return; 
+                if(trapped) { 
+                    playSound('sfx-win');
+                    gameOver("GOATS WIN!"); 
+                    return; 
+                }
             }
 
             turn = turn==='goat'?'tiger':'goat';
-            startUndo();
             updateHUD();
+            startUndo();
             isAnimating = false;
-
+            
             if(gameMode==='computer' && turn==='tiger') setTimeout(aiMove, 1000);
         }
 
-        function endGame(msg) {
+        function gameOver(msg) {
             document.getElementById('msg-txt').innerText = msg;
-            let s = JSON.parse(localStorage.getItem('bcStats'))||{t:0, g:0};
+            let s = JSON.parse(localStorage.getItem('bcStats'))||{t:0,g:0};
             if(msg.includes('TIGER')) s.t++; else s.g++;
             localStorage.setItem('bcStats', JSON.stringify(s));
-            
-            setTimeout(()=>{
-                alert(msg);
-                pieces.forEach(p=>{if(p) p.isDancing=false;});
-            }, 2000);
+            alert(msg);
+            showMenu();
         }
 
+        function aiMove() {
+            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
+            // Capture
+            for(let t of tigers) {
+                for(let i=0; i<25; i++) {
+                    if(board[i]===EMPTY) {
+                        let m=getJump(t, i);
+                        if(m!==-1) { act(t, i, 'eat', m); return; }
+                    }
+                }
+            }
+            // Move
+            let moves=[];
+            for(let t of tigers) getAdj(t).forEach(n=>{if(board[n]===EMPTY) moves.push({f:t, t:n})});
+            if(moves.length>0) {
+                let mv=moves[Math.floor(Math.random()*moves.length)];
+                act(mv.f, mv.t, 'move');
+            } else endTurn();
+        }
+
+        // --- UTILS ---
+        function getCoord(i) { const r=Math.floor(i/5), c=i%5; return {x:(c-2)*3, z:(r-2)*3}; }
+        function getAdj(i) {
+            let a=[], r=Math.floor(i/5), c=i%5;
+            [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) a.push(nr*5+nc)});
+            if(i%2===0) [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) a.push(nr*5+nc)});
+            return a;
+        }
+        function getJump(f,t) {
+            let r1=Math.floor(f/5),c1=f%5, r2=Math.floor(t/5),c2=t%5, dr=r2-r1, dc=c2-c1;
+            if((Math.abs(dr)===2&&dc===0)||(Math.abs(dc)===2&&dr===0)||(Math.abs(dr)===2&&Math.abs(dc)===2)) {
+                let m=(r1+dr/2)*5+(c1+dc/2);
+                if(getAdj(f).includes(m)&&getAdj(m).includes(t)&&board[m]===GOAT) return m;
+            } return -1;
+        }
+
+        function explode(pos) {
+            for(let i=0; i<15; i++) {
+                const m = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), new THREE.MeshBasicMaterial({color: 0xffffff}));
+                m.position.copy(pos);
+                m.userData = {v: new THREE.Vector3((Math.random()-0.5), Math.random(), (Math.random()-0.5))};
+                scene.add(m); particles.push(m);
+            }
+        }
+        
         function updateHUD() {
             const h = document.getElementById('turn-txt');
-            const m = document.getElementById('msg-txt');
-            if(turn==='goat') {
-                h.innerText="GOAT'S TURN"; h.style.color="#fff";
-                m.innerText=phase===1?"PLACE A GOAT":"MOVE A GOAT";
-            } else {
-                h.innerText="TIGER'S TURN"; h.style.color="#ffd700";
-                m.innerText="HUNT OR MOVE";
-            }
-            document.getElementById('cnt-placed').innerText = goatsPlaced;
-            document.getElementById('cnt-dead').innerText = goatsDead;
+            if(turn==='goat') { h.innerText="GOAT'S TURN"; h.style.color="#fff"; }
+            else { h.innerText="TIGER'S TURN"; h.style.color="#ffd700"; }
+            document.getElementById('msg-txt').innerText = turn==='goat' ? (phase===1?"PLACE UNIT":"MOVE UNIT") : "HUNT OR MOVE";
+            document.getElementById('cnt-placed').innerText=goatsPlaced;
+            document.getElementById('cnt-dead').innerText=goatsDead;
         }
+
+        // UI Helpers
+        window.showOnline = function() { document.getElementById('online-screen').classList.add('active'); }
+        window.showStats = function() {
+            let s=JSON.parse(localStorage.getItem('bcStats'))||{t:0,g:0};
+            document.getElementById('st-tiger').innerText=s.t;
+            document.getElementById('st-goat').innerText=s.g;
+            document.getElementById('stats-screen').classList.add('active');
+        }
+        window.showRules = function() { document.getElementById('rules-screen').classList.add('active'); }
+        window.resetStats = function() { localStorage.removeItem('bcStats'); window.showStats(); }
 
         // Undo
         function startUndo() {
             document.getElementById('btn-undo').style.display='block';
             document.getElementById('undo-wrapper').style.display='block';
-            const bar = document.getElementById('undo-progress');
-            bar.style.transition='none'; bar.style.width='100%';
-            setTimeout(()=>{bar.style.transition='width 4s linear'; bar.style.width='0%';},50);
-            undoTimer = setTimeout(stopUndo, 4000);
+            const b = document.getElementById('undo-progress');
+            b.style.transition='none'; b.style.width='100%';
+            setTimeout(()=>{b.style.transition='width 4s linear'; b.style.width='0%';},50);
+            undoTimer=setTimeout(stopUndo, 4000);
         }
         function stopUndo() {
             document.getElementById('btn-undo').style.display='none';
@@ -606,76 +660,35 @@
         window.performUndo = function() {
             clearTimeout(undoTimer); stopUndo();
             if(!historyStack) return;
-            // Restore
-            board = historyStack.board;
-            turn = historyStack.turn;
-            phase = historyStack.phase;
-            goatsPlaced = historyStack.goatsPlaced;
-            goatsDead = historyStack.goatsDead;
+            board=historyStack.board; turn=historyStack.turn; phase=historyStack.phase;
+            goatsPlaced=historyStack.goatsPlaced; goatsDead=historyStack.goatsDead;
             // Visual Reset
-            pieces.forEach(p=>{if(p) scene.remove(p.mesh)});
-            pieces = new Array(25).fill(null);
-            board.forEach((v,i)=>{if(v!==EMPTY) pieces[i]=new Animal(v, i)});
+            pieces.forEach(p=>{if(p)scene.remove(p.mesh)});
+            pieces=new Array(25).fill(null);
+            board.forEach((v,i)=>{if(v!==EMPTY) pieces[i]=new Animal(v,i)});
             updateHUD();
         }
 
-        // AI
-        function aiMove() {
-            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
-            // 1. Capture
-            for(let t of tigers) {
-                for(let i=0; i<25; i++) {
-                    if(board[i]===EMPTY) {
-                        let m=getJump(t, i);
-                        if(m!==-1) { action(t, i, 'eat', m); return; }
-                    }
-                }
-            }
-            // 2. Random
-            let moves=[];
-            for(let t of tigers) {
-                getAdj(t).forEach(n=>{if(board[n]===EMPTY) moves.push({f:t, t:n})});
-            }
-            if(moves.length>0) {
-                let mv=moves[Math.floor(Math.random()*moves.length)];
-                action(mv.f, mv.t, 'move');
-            } else {
-                endTurn();
-            }
-        }
-
-        // Helpers
+        // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
-            const time = Date.now()*0.001;
-            pieces.forEach(p=>{if(p) p.update(time)});
+            const t = Date.now()*0.001;
+            pieces.forEach(p=>{if(p) p.update(t)});
             for(let i=particles.length-1; i>=0; i--) {
                 let p=particles[i];
-                p.position.add(p.userData.vel);
+                p.position.add(p.userData.v);
                 p.scale.subScalar(0.02);
                 if(p.scale.x<=0) { scene.remove(p); particles.splice(i,1); }
             }
             renderer.render(scene, camera);
         }
-        function onResize(){ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); }
-
-        // Extras
-        window.showOnlineLobby = function() { document.getElementById('online-screen').classList.add('active'); }
-        window.showStats = function() {
-            let s=JSON.parse(localStorage.getItem('bcStats'))||{t:0, g:0};
-            document.getElementById('stat-tiger').innerText=s.t;
-            document.getElementById('stat-goat').innerText=s.g;
-            document.getElementById('stats-screen').classList.add('active');
-        }
-        window.showRules=function(){document.getElementById('rules-screen').classList.add('active');}
-        window.resetStats=function(){localStorage.removeItem('bcStats'); window.showStats();}
-
-        // CSS Animation for spinner
-        const style = document.createElement('style');
-        style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
-        document.head.appendChild(style);
-
+        function onResize(){camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight);}
+        
+        // CSS Animation
+        const st = document.createElement('style');
+        st.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+        document.head.appendChild(st);
     </script>
 </body>
 </html>
