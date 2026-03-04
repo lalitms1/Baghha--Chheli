@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Goat-Tiger: Jungle Audio Edition</title>
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at center, #1b2e1b, #000000);
+            --accent-gold: #FFD700;
+            --board-wood: #DEB887;
+            --trace-color: rgba(0, 255, 255, 0.5);
+            --undo-color: #ff4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://www.transparenttextures.com/patterns/cubes.png'), var(--bg-gradient);
+            color: white;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* --- MENUS --- */
+        .screen {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            transition: opacity 0.3s ease;
+        }
+        .hidden { display: none !important; }
+
+        h1 {
+            font-size: 2.8rem; color: var(--accent-gold);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            margin-bottom: 10px; text-transform: uppercase;
+        }
+
+        .menu-btn {
+            background: linear-gradient(145deg, #2e7d32, #1b5e20);
+            border: 2px solid #4CAF50;
+            color: white; padding: 15px 35px; margin: 10px;
+            font-size: 1.2rem; font-weight: bold;
+            border-radius: 30px; cursor: pointer;
+            width: 80%; max-width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+        .menu-btn:active { transform: scale(0.95); }
+
+        /* --- GAME UI --- */
+        #game-ui {
+            width: 100%; max-width: 450px;
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: 20px;
+        }
+
+        .hud-top {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 90%; background: rgba(255,255,255,0.1);
+            padding: 10px 20px; border-radius: 12px; margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .turn-box { font-size: 1.2rem; font-weight: bold; }
+        .turn-goat { color: #fff; text-shadow: 0 0 5px white; }
+        .turn-tiger { color: #ff9800; text-shadow: 0 0 5px orange; }
+
+        /* --- BOARD --- */
+        .board-container {
+            position: relative;
+            width: 340px; height: 340px;
+            background-color: var(--board-wood);
+            border: 12px solid #3E2723;
+            border-radius: 8px;
+            box-shadow: 0 20px 50px black;
+        }
+
+        svg { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+        line { stroke: #3E2723; stroke-width: 4; stroke-linecap: round; }
+
+        .grid {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+        }
+
+        .cell {
+            position: relative; display: flex;
+            justify-content: center; align-items: center;
+            cursor: pointer; z-index: 10;
+        }
+
+        /* --- PIECES --- */
+        .piece {
+            width: 70%; height: 70%;
+            background-size: contain; background-repeat: no-repeat;
+            background-position: center;
+            filter: drop-shadow(0 3px 2px rgba(0,0,0,0.6));
+            transition: transform 0.2s;
+            z-index: 20;
+        }
+        /* Tiger SVG */
+        .tiger {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23FF9800' stroke='%23BF360C' stroke-width='4'/%3E%3Cpath d='M20,35 Q10,10 40,25 Q50,5 60,25 Q90,10 80,35' fill='%23fff' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='35' cy='45' r='5' fill='%23000'/%3E%3Ccircle cx='65' cy='45' r='5' fill='%23000'/%3E%3Cpath d='M30,75 Q50,90 70,75' fill='none' stroke='%23000' stroke-width='3'/%3E%3C/svg%3E");
+        }
+        /* Goat SVG */
+        .goat {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23F5F5F5' stroke='%23616161' stroke-width='3'/%3E%3Cpath d='M20,30 C10,10 40,10 45,30' fill='%239E9E9E' stroke='%23424242' stroke-width='3'/%3E%3Cpath d='M80,30 C90,10 60,10 55,30' fill='%239E9E9E' stroke='%23424242' stroke-width='3'/%3E%3Ccircle cx='35' cy='50' r='4' fill='%23000'/%3E%3Ccircle cx='65' cy='50' r='4' fill='%23000'/%3E%3C/svg%3E");
+        }
+
+        /* --- ANIMATIONS & TRACES --- */
+        .selected { transform: scale(1.3); filter: drop-shadow(0 0 8px yellow); }
+        
+        .trace-from {
+            background: rgba(255, 0, 0, 0.3);
+            border-radius: 50%;
+            width: 50%; height: 50%;
+            box-shadow: 0 0 10px rgba(255,0,0,0.5);
+            animation: pulseFade 2s forwards;
+        }
+
+        .trace-to {
+            background: rgba(0, 255, 0, 0.3);
+            border-radius: 50%;
+            width: 50%; height: 50%;
+            box-shadow: 0 0 10px rgba(0,255,0,0.5);
+            animation: pulseFade 2s forwards;
+        }
+
+        @keyframes pulseFade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        /* --- CONTROLS --- */
+        #undo-container {
+            height: 50px; margin-top: 15px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #undo-btn {
+            background: var(--undo-color); color: white;
+            border: none; padding: 10px 30px;
+            font-size: 1.1rem; border-radius: 25px;
+            box-shadow: 0 0 15px var(--undo-color);
+            cursor: pointer; font-weight: bold;
+            display: none; /* Hidden by default */
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn { 0% {transform: scale(0);} 100% {transform: scale(1);} }
+
+        #timer-bar {
+            width: 0%; height: 4px;
+            background: var(--undo-color);
+            margin-top: 5px; border-radius: 2px;
+            transition: width 2s linear;
+        }
+
+        .valid-move::after {
+            content: ''; position: absolute;
+            width: 15px; height: 15px;
+            background: lime; border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        #msg-toast {
+            position: fixed; bottom: 80px;
+            background: #333; color: #fff;
+            padding: 8px 16px; border-radius: 20px;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        #msg-toast.show { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- AUDIO ASSETS -->
+    <!-- Using generic open game sounds -->
+    <audio id="sfx-goat-move" src="https://cdn.pixabay.com/audio/2022/03/15/audio_736675271a.mp3"></audio> <!-- Sheep/Goat -->
+    <audio id="sfx-tiger-move" src="https://cdn.pixabay.com/audio/2022/10/16/audio_10629734ea.mp3"></audio> <!-- Low Growl -->
+    <audio id="sfx-eat" src="https://cdn.pixabay.com/audio/2024/08/29/audio_83d2629b13.mp3"></audio> <!-- Crunch -->
+    <audio id="sfx-win" src="https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c7443c.mp3"></audio> <!-- Win/Success -->
+    
+    <!-- SCREENS -->
+    <div id="menu-screen" class="screen">
+        <h1>Goat & Tiger</h1>
+        <button class="menu-btn" onclick="startGame('friend')">Play vs Friend</button>
+        <button class="menu-btn" onclick="startGame('computer')">Play vs Computer</button>
+        <button class="menu-btn" style="background: #444; border-color: #666;" onclick="showInstructions()">Instructions</button>
+    </div>
+
+    <div id="game-screen" class="screen hidden" style="background: transparent;">
+        <div id="game-ui">
+            <!-- Heads Up Display -->
+            <div class="hud-top">
+                <div class="turn-box" id="turn-display">Goat's Turn</div>
+                <div style="text-align: right; font-size: 0.9rem;">
+                    Goats: <span id="cnt-placed">0</span>/20<br>
+                    Eaten: <span id="cnt-dead" style="color: #ff5722">0</span>/5
+                </div>
+            </div>
+
+            <!-- Board -->
+            <div class="board-container">
+                <svg id="board-svg"></svg>
+                <div class="grid" id="grid"></div>
+            </div>
+
+            <!-- Undo / Timer Section -->
+            <div id="undo-container">
+                <button id="undo-btn" onclick="undoLastMove()">↩ UNDO / CORRECT</button>
+            </div>
+            <div style="width: 200px; background: #333; height: 4px; border-radius: 2px; overflow: hidden; margin-top: 5px; opacity: 0;" id="timer-bg">
+                <div id="timer-bar"></div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="menu-btn" style="padding: 10px 20px; font-size: 1rem; width: auto;" onclick="quitGame()">Main Menu</button>
+            </div>
+        </div>
+        <div id="msg-toast">Message</div>
+    </div>
+
+    <script>
+        /* --- CONFIG --- */
+        const TIGER = 2, GOAT = 1, EMPTY = 0;
+        let board = Array(25).fill(0);
+        let turn = 'goat';
+        let phase = 1; // 1=Place, 2=Move
+        let goatsPlaced = 0;
+        let goatsDead = 0;
+        let selectedIdx = null;
+        let gameMode = 'friend';
+        let gameOver = false;
+        
+        // Wait/Undo Logic State
+        let isWaiting = false; // Input locked during wait
+        let timerId = null;
+        let prevBoardState = null; // Snapshot for undo
+        let prevGameState = null;  // Snapshot of variables
+
+        const ADJACENCY = {};
+        
+        /* --- INITIALIZATION --- */
+        function initGraph() {
+            for(let i=0; i<25; i++) {
+                ADJACENCY[i] = [];
+                let r = Math.floor(i/5), c = i%5;
+                checkAdd(i, r, c, -1, 0); checkAdd(i, r, c, 1, 0);
+                checkAdd(i, r, c, 0, -1); checkAdd(i, r, c, 0, 1);
+                if(i%2===0) {
+                    checkAdd(i, r, c, -1, -1); checkAdd(i, r, c, -1, 1);
+                    checkAdd(i, r, c, 1, -1); checkAdd(i, r, c, 1, 1);
+                }
+            }
+        }
+        function checkAdd(i, r, c, dr, dc) {
+            let nr=r+dr, nc=c+dc;
+            if(nr>=0 && nr<5 && nc>=0 && nc<5) ADJACENCY[i].push(nr*5+nc);
+        }
+
+        /* --- AUDIO --- */
+        function playSound(type) {
+            // Simple robust error handling
+            try {
+                const map = {
+                    'goat': 'sfx-goat-move',
+                    'tiger': 'sfx-tiger-move',
+                    'eat': 'sfx-eat',
+                    'win': 'sfx-win'
+                };
+                const audio = document.getElementById(map[type]);
+                if(audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log("Audio play blocked (user interaction required first)"));
+                }
+            } catch(e) {}
+        }
+
+        /* --- CORE GAME LOOP --- */
+        function startGame(mode) {
+            gameMode = mode;
+            resetGame();
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('game-screen').classList.remove('hidden');
+            drawLines();
+        }
+
+        function resetGame() {
+            board.fill(EMPTY);
+            board[0]=TIGER; board[4]=TIGER; board[20]=TIGER; board[24]=TIGER;
+            turn = 'goat'; phase = 1; goatsPlaced = 0; goatsDead = 0;
+            selectedIdx = null; gameOver = false; isWaiting = false;
+            
+            // Clean UI
+            document.getElementById('undo-btn').style.display = 'none';
+            document.getElementById('timer-bg').style.opacity = '0';
+            
+            updateHUD();
+            renderBoard();
+        }
+
+        function handleCellClick(idx) {
+            if(gameOver || isWaiting) return;
+            if(gameMode === 'computer' && turn === 'tiger') return;
+
+            if(turn === 'goat') handleGoat(idx);
+            else handleTiger(idx);
+        }
+
+        function handleGoat(idx) {
+            if(phase === 1) {
+                if(board[idx] === EMPTY) executeMoveAction(null, idx, 'place');
+            } else {
+                if(board[idx] === GOAT) { selectedIdx = idx; renderBoard(); }
+                else if(board[idx] === EMPTY && selectedIdx !== null) {
+                    if(ADJACENCY[selectedIdx].includes(idx)) executeMoveAction(selectedIdx, idx, 'move');
+                    else toast("Follow the lines!");
+                }
+            }
+        }
+
+        function handleTiger(idx) {
+            if(board[idx] === TIGER) { selectedIdx = idx; renderBoard(); }
+            else if(board[idx] === EMPTY && selectedIdx !== null) {
+                if(ADJACENCY[selectedIdx].includes(idx)) {
+                    executeMoveAction(selectedIdx, idx, 'move');
+                } else {
+                    let mid = getJump(selectedIdx, idx);
+                    if(mid !== -1) executeMoveAction(selectedIdx, idx, 'capture', mid);
+                    else toast("Invalid Tiger Move");
+                }
+            }
+        }
+
+        /* --- MOVE EXECUTION WITH DELAY & TRACE --- */
+        function executeMoveAction(from, to, type, mid = null) {
+            // 1. Save State for Undo
+            saveState();
+
+            // 2. Update Data
+            if(type === 'place') {
+                board[to] = GOAT;
+                goatsPlaced++;
+                if(goatsPlaced === 20) phase = 2;
+                playSound('goat');
+            } else if(type === 'move') {
+                board[to] = board[from];
+                board[from] = EMPTY;
+                playSound(turn === 'goat' ? 'goat' : 'tiger');
+            } else if(type === 'capture') {
+                board[to] = TIGER;
+                board[from] = EMPTY;
+                board[mid] = EMPTY;
+                goatsDead++;
+                playSound('eat');
+            }
+
+            // 3. Render Visuals (Trace)
+            selectedIdx = null;
+            renderBoard(from, to); 
+            updateHUD();
+
+            // 4. Start Wait/Undo Period
+            startWaitPeriod();
+        }
+
+        function startWaitPeriod() {
+            isWaiting = true;
+            const undoBtn = document.getElementById('undo-btn');
+            const timerBar = document.getElementById('timer-bar');
+            const timerBg = document.getElementById('timer-bg');
+
+            // Show Undo UI
+            undoBtn.style.display = 'block';
+            timerBg.style.opacity = '1';
+            
+            // Animate Timer
+            // Force reflow for CSS animation reset
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            setTimeout(() => {
+                timerBar.style.transition = 'width 2s linear';
+                timerBar.style.width = '0%';
+            }, 10);
+
+            // Set Timeout for Turn Switch
+            timerId = setTimeout(() => {
+                finalizeTurn();
+            }, 2000); // 2 Seconds Wait
+        }
+
+        function undoLastMove() {
+            if(!prevBoardState) return;
+
+            // Cancel the turn switch
+            clearTimeout(timerId);
+            
+            // Restore State
+            board = [...prevBoardState];
+            turn = prevGameState.turn;
+            phase = prevGameState.phase;
+            goatsPlaced = prevGameState.goatsPlaced;
+            goatsDead = prevGameState.goatsDead;
+            
+            // Hide Undo UI
+            document.getElementById('undo-btn').style.display = 'none';
+            document.getElementById('timer-bg').style.opacity = '0';
+            
+            isWaiting = false;
+            toast("Move Corrected!");
+            renderBoard();
+            updateHUD();
+        }
+
+        function finalizeTurn() {
+            // Hide Undo UI
+            document.getElementById('undo-btn').style.display = 'none';
+            document.getElementById('timer-bg').style.opacity = '0';
+            isWaiting = false;
+
+            // Check Win
+            if(checkWin()) return;
+
+            // Switch Turn
+            turn = (turn === 'goat') ? 'tiger' : 'goat';
+            updateHUD();
+            renderBoard(); // Clears traces
+
+            // Trigger AI if needed
+            if(gameMode === 'computer' && turn === 'tiger') {
+                setTimeout(aiTurn, 500);
+            }
+        }
+
+        function saveState() {
+            prevBoardState = [...board];
+            prevGameState = { turn, phase, goatsPlaced, goatsDead };
+        }
+
+        /* --- GAME LOGIC HELPERS --- */
+        function getJump(from, to) {
+            let r1 = Math.floor(from/5), c1 = from%5;
+            let r2 = Math.floor(to/5), c2 = to%5;
+            let dr = r2-r1, dc = c2-c1;
+
+            if(Math.abs(dr)===2 || Math.abs(dc)===2) {
+                if(Math.abs(dr) !== 2 && dr !== 0) return -1;
+                if(Math.abs(dc) !== 2 && dc !== 0) return -1;
+                
+                let mr = r1 + dr/2, mc = c1 + dc/2;
+                let mid = mr*5 + mc;
+                
+                // Check connectivity
+                if(ADJACENCY[from].includes(mid) && ADJACENCY[mid].includes(to)) {
+                    if(board[mid] === GOAT) return mid;
+                }
+            }
+            return -1;
+        }
+
+        function checkWin() {
+            if(goatsDead >= 5) { endGame("Tiger"); return true; }
+            if(isTrapped()) { endGame("Goat"); return true; }
+            return false;
+        }
+
+        function isTrapped() {
+            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
+            for(let t of tigers) {
+                // Check Moves
+                for(let n of ADJACENCY[t]) if(board[n]===EMPTY) return false;
+                // Check Jumps
+                for(let n of ADJACENCY[t]) {
+                   if(board[n] === GOAT) {
+                       let r1 = Math.floor(t/5), c1 = t%5;
+                       let r2 = Math.floor(n/5), c2 = n%5;
+                       let r3 = r2 + (r2-r1), c3 = c2 + (c2-c1);
+                       if(r3>=0 && r3<5 && c3>=0 && c3<5) {
+                           let dest = r3*5 + c3;
+                           if(ADJACENCY[n].includes(dest) && board[dest] === EMPTY) return false;
+                       }
+                   }
+                }
+            }
+            return true;
+        }
+
+        function endGame(winner) {
+            gameOver = true;
+            playSound('win');
+            setTimeout(() => {
+                alert(winner + " WINS!");
+                document.getElementById('menu-screen').classList.remove('hidden');
+            }, 500);
+        }
+
+        /* --- AI LOGIC (Simple) --- */
+        function aiTurn() {
+            if(gameOver) return;
+            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
+            
+            // 1. Try Capture
+            for(let t of tigers) {
+                // Find potential jumps by looking at neighbors neighbors
+                // Simplified: scan all empty spots
+                for(let i=0; i<25; i++) {
+                    if(board[i]===EMPTY) {
+                        let mid = getJump(t, i);
+                        if(mid !== -1) {
+                            // AI moves do not offer undo (instant commit)
+                            board[i] = TIGER; board[t] = EMPTY; board[mid] = EMPTY;
+                            goatsDead++;
+                            playSound('eat');
+                            renderBoard(t, i);
+                            if(!checkWin()) {
+                                turn = 'goat'; updateHUD();
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 2. Random Move
+            let moves = [];
+            for(let t of tigers) {
+                for(let n of ADJACENCY[t]) if(board[n]===EMPTY) moves.push({f:t, t:n});
+            }
+            if(moves.length > 0) {
+                moves.sort(()=>Math.random()-0.5);
+                let m = moves[0];
+                board[m.t] = TIGER; board[m.f] = EMPTY;
+                playSound('tiger');
+                renderBoard(m.f, m.t);
+                turn = 'goat'; updateHUD();
+            } else {
+                turn = 'goat'; updateHUD(); // Should imply trapped, handled by checkWin
+            }
+        }
+
+        /* --- RENDERING --- */
+        function updateHUD() {
+            const el = document.getElementById('turn-display');
+            if(turn === 'goat') {
+                el.innerText = "Goat's Turn 🐐";
+                el.className = "turn-box turn-goat";
+            } else {
+                el.innerText = "Tiger's Turn 🐯";
+                el.className = "turn-box turn-tiger";
+            }
+            document.getElementById('cnt-placed').innerText = goatsPlaced;
+            document.getElementById('cnt-dead').innerText = goatsDead;
+        }
+
+        function renderBoard(traceFrom = null, traceTo = null) {
+            const g = document.getElementById('grid');
+            g.innerHTML = '';
+            for(let i=0; i<25; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => handleCellClick(i);
+                
+                // Pieces
+                if(board[i]!==EMPTY) {
+                    let p = document.createElement('div');
+                    p.className = (board[i]===TIGER ? 'piece tiger' : 'piece goat');
+                    if(i===selectedIdx) p.classList.add('selected');
+                    cell.appendChild(p);
+                }
+
+                // Traces
+                if(i === traceFrom) {
+                    let t = document.createElement('div'); t.className = 'trace-from';
+                    cell.appendChild(t);
+                }
+                if(i === traceTo) {
+                    let t = document.createElement('div'); t.className = 'trace-to';
+                    cell.appendChild(t);
+                }
+
+                // Hints
+                if(selectedIdx!==null && !isWaiting) {
+                    let isValid = false;
+                    if(board[i]===EMPTY) {
+                         // Move hint
+                         if(ADJACENCY[selectedIdx].includes(i)) {
+                             if(board[selectedIdx]===TIGER || (board[selectedIdx]===GOAT && phase===2)) isValid=true;
+                         }
+                         // Capture hint
+                         if(board[selectedIdx]===TIGER && getJump(selectedIdx, i)!==-1) isValid=true;
+                    }
+                    if(isValid) cell.classList.add('valid-move');
+                }
+
+                g.appendChild(cell);
+            }
+        }
+
+        function drawLines() {
+            const s = document.getElementById('board-svg');
+            s.innerHTML = '';
+            for(let i=0; i<25; i++) {
+                ADJACENCY[i].forEach(n => {
+                    if(n>i) {
+                        let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        let c1 = i%5, r1 = Math.floor(i/5);
+                        let c2 = n%5, r2 = Math.floor(n/5);
+                        l.setAttribute("x1", (c1*20+10)+"%"); l.setAttribute("y1", (r1*20+10)+"%");
+                        l.setAttribute("x2", (c2*20+10)+"%"); l.setAttribute("y2", (r2*20+10)+"%");
+                        s.appendChild(l);
+                    }
+                });
+            }
+        }
+
+        function toast(m) {
+            let t = document.getElementById('msg-toast');
+            t.innerText = m; t.classList.add('show');
+            setTimeout(()=>t.classList.remove('show'), 2000);
+        }
+
+        function showInstructions() { alert("Rules:\n1. Goats place then move.\n2. Tigers move or jump to eat.\n3. Goats win by trapping Tigers.\n4. Tigers win by eating 5 Goats."); }
+        function quitGame() { if(confirm("Quit?")) document.getElementById('menu-screen').classList.remove('hidden'); }
+
+        initGraph();
+    </script>
+</body>
+</html>
