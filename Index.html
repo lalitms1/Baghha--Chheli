@@ -3,216 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Jungle 7D: Bagh Chal</title>
+    <title>Bagh Chal: Jungle 7D</title>
     <style>
-        :root {
-            --wood-dark: #3e2723;
-            --wood-light: #8d6e63;
-            --gold: #ffd700;
-            --jungle-green: #1b5e20;
-            --glass: rgba(30, 20, 10, 0.85);
-        }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
         
-        body { 
-            margin: 0; overflow: hidden; 
-            background: radial-gradient(circle, #2e7d32 0%, #000000 100%);
-            font-family: 'Segoe UI', Tahoma, serif; 
-            user-select: none; 
-        }
-
-        /* --- UI LAYER --- */
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-
+        /* --- UI STYLES --- */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; z-index: 10; }
         .pointer-auto { pointer-events: auto; }
 
-        .panel {
-            background: var(--glass);
-            border: 2px solid var(--wood-light);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border-radius: 10px;
-            color: #fff;
-            padding: 15px; margin: 15px;
-            backdrop-filter: blur(4px);
+        /* HUD */
+        .hud {
+            background: rgba(10, 5, 0, 0.9);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 15px; margin: 20px;
+            border-radius: 8px;
             text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            transition: 0.3s;
         }
 
-        h1 { color: var(--gold); margin: 0 0 10px 0; text-shadow: 2px 2px 4px #000; font-family: 'Georgia', serif; }
+        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px #ffd700; }
+        .stat-row { font-size: 0.9rem; margin-top: 5px; color: #aaa; }
 
-        /* Buttons */
+        /* BUTTONS */
         .btn {
-            background: linear-gradient(180deg, #5d4037, #3e2723);
-            border: 1px solid var(--gold);
-            color: var(--gold); padding: 10px 20px;
-            font-weight: bold; cursor: pointer;
-            margin: 5px; border-radius: 5px;
-            transition: 0.2s; width: 80%;
+            background: linear-gradient(180deg, #3e2723, #1b0000);
+            border: 1px solid #ffd700; color: #ffd700;
+            padding: 12px 25px; cursor: pointer; font-weight: bold;
+            text-transform: uppercase; border-radius: 4px;
+            margin: 5px; transition: 0.2s; font-size: 1rem;
         }
-        .btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+        .btn:hover { background: #ffd700; color: #000; box-shadow: 0 0 20px #ffd700; transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
+        .btn-red { border-color: #ff3d00; color: #ff3d00; background: #300; }
+        .btn-red:hover { background: #ff3d00; color: #fff; }
 
-        .hud-top { align-self: flex-start; min-width: 250px; }
-        .hud-bottom { align-self: center; min-width: 300px; margin-bottom: 30px; }
-
-        #turn-txt { font-size: 1.4rem; font-weight: bold; text-transform: uppercase; }
-
-        /* Modal Overlay */
+        /* MODALS */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex; align-items: center; justify-content: center;
-            pointer-events: auto; z-index: 100;
+            background: rgba(0,0,0,0.95); z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: auto; opacity: 0; transition: opacity 0.5s; pointer-events: none;
         }
-        .hidden { display: none !important; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
         .modal-box {
-            background: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), #4e342e;
-            border: 4px solid var(--gold);
-            padding: 30px; border-radius: 15px;
-            text-align: center; max-width: 400px;
-            box-shadow: 0 0 50px #000;
+            background: #111; border: 4px solid #ffd700;
+            padding: 40px; text-align: center; max-width: 500px;
+            box-shadow: 0 0 50px rgba(255, 165, 0, 0.2);
         }
 
-        /* Controls Hint */
-        #hint {
-            position: absolute; bottom: 10px; right: 10px;
-            color: rgba(255,255,255,0.6); font-size: 0.8rem;
-            text-align: right; pointer-events: none;
+        /* LOADING SCREEN */
+        #loader { opacity: 1; pointer-events: auto; z-index: 200; background: #050505; color: #ffd700; flex-direction: column; }
+        
+        /* UNDO BAR */
+        #undo-wrapper { width: 100%; height: 6px; background: #333; margin-top: 10px; border-radius: 3px; overflow: hidden; display: none; }
+        #undo-progress { width: 100%; height: 100%; background: #ffd700; transition: width 4s linear; }
+
+        #controls-hint {
+            position: absolute; bottom: 10px; right: 10px; 
+            color: rgba(255,255,255,0.3); font-size: 0.8rem; text-align: right;
         }
-
-        /* Undo Bar */
-        #undo-bar-bg { width: 100%; height: 6px; background: #333; margin-top: 10px; border-radius: 3px; overflow: hidden;}
-        #undo-bar { width: 0%; height: 100%; background: var(--gold); transition: width 4s linear; }
-
     </style>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
+    
+    <!-- LIBRARIES (Global Build - Fixes the stuck loading issue) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
-    <!-- AUDIO ASSETS -->
-    <audio id="sfx-tiger" src="https://cdn.pixabay.com/audio/2022/10/16/audio_10629734ea.mp3"></audio> <!-- Roar -->
-    <audio id="sfx-goat" src="https://cdn.pixabay.com/audio/2022/03/15/audio_736675271a.mp3"></audio> <!-- Bleat -->
-    <audio id="sfx-wood" src="https://cdn.pixabay.com/audio/2022/03/24/audio_33a7698572.mp3"></audio> <!-- Wood Tap -->
-    <audio id="sfx-win" src="https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c7443c.mp3"></audio> <!-- Victory -->
+    <!-- AUDIO -->
+    <audio id="sfx-bgm" loop><source src="https://cdn.pixabay.com/audio/2022/08/02/audio_884fe92c21.mp3" type="audio/mpeg"></audio> <!-- Deep Jungle -->
+    <audio id="sfx-roar" src="https://cdn.pixabay.com/audio/2022/10/16/audio_10629734ea.mp3"></audio>
+    <audio id="sfx-bleat" src="https://cdn.pixabay.com/audio/2022/03/15/audio_736675271a.mp3"></audio>
+    <audio id="sfx-step" src="https://cdn.pixabay.com/audio/2022/03/24/audio_33a7698572.mp3"></audio>
+    <audio id="sfx-win" src="https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c7443c.mp3"></audio>
 
-    <!-- GAME UI -->
-    <div id="ui-layer">
-        <div class="panel hud-top pointer-auto">
-            <div id="turn-txt" style="color: #fff">Goat's Turn</div>
-            <div style="font-size: 0.9rem; margin-top: 5px; color: #ddd;">
-                Goats Placed: <span id="ui-placed">0</span>/20<br>
-                Goats Eaten: <span id="ui-dead" style="color: #ff5722">0</span>/5
-            </div>
-            <button class="btn" style="margin-top: 10px; font-size: 0.8rem; padding: 5px;" onclick="showMenu()">Pause / Menu</button>
-        </div>
-
-        <div class="panel hud-bottom pointer-auto">
-            <div id="msg-box" style="color: var(--gold); font-weight: bold; margin-bottom: 10px;">Place a Goat</div>
-            <button id="btn-undo" class="btn" style="background: #d32f2f; border-color: #ff5252; color: white; display:none;" onclick="undoMove()">Undo Move</button>
-            <div id="undo-bar-bg"><div id="undo-bar"></div></div>
-        </div>
+    <!-- LOADING SCREEN -->
+    <div id="loader" class="modal-overlay active">
+        <h1 style="font-size: 2.5rem; margin-bottom: 20px;">BAGH CHAL 7D</h1>
+        <div style="font-size:1rem; color:#888;">Generating Jungle Environment...</div>
+        <div id="loading-status" style="margin-top:10px; color:#4caf50;">Ready</div>
+        <button id="btn-start" class="btn" style="margin-top: 40px; font-size: 1.2rem; padding: 15px 40px;">ENTER WORLD</button>
     </div>
 
-    <div id="hint">Rotate: Drag | Zoom: Scroll | Pan: Right-Click</div>
-
-    <!-- MENUS -->
-    <div id="menu-overlay" class="modal-overlay">
+    <!-- MAIN MENU -->
+    <div id="menu-screen" class="modal-overlay">
         <div class="modal-box">
-            <h1>JUNGLE 7D</h1>
-            <p style="color:#ccc; margin-bottom: 20px;">The Ancient Game of Strategy</p>
+            <h1 style="font-size: 2rem; margin-bottom: 10px;">MAIN MENU</h1>
+            <p style="color:#aaa; margin-bottom: 30px;">Defend the Herd or Hunt for Survival</p>
             
-            <button class="btn" onclick="startGame('friend')">Play vs Friend</button>
-            <button class="btn" onclick="startGame('computer')">Play vs Computer</button>
-            <button class="btn" onclick="alert('Searching for Jungle Server...\n(Offline Demo)')">Play Online</button>
+            <button class="btn" onclick="setGameMode('friend')">⚔️ Play vs Friend</button>
+            <button class="btn" onclick="setGameMode('computer')">🤖 Play vs Computer</button>
+            <button class="btn" onclick="showOnlineLobby()">🌐 Play Online</button>
             
-            <div style="display:flex; justify-content: center; margin-top: 10px;">
-                <button class="btn" style="width: 45%" onclick="showRules()">Rules</button>
-                <button class="btn" style="width: 45%" onclick="showStats()">Stats</button>
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+                <button class="btn" onclick="showStats()">🏆 Stats</button>
+                <button class="btn" onclick="showRules()">📜 Rules</button>
             </div>
         </div>
     </div>
 
-    <div id="rules-overlay" class="modal-overlay hidden">
+    <!-- RULES -->
+    <div id="rules-screen" class="modal-overlay">
         <div class="modal-box" style="text-align: left;">
-            <h2 style="color:var(--gold); text-align: center;">How to Play</h2>
-            <p style="color:#fff"><strong>🐯 Tigers:</strong> Start in corners. Move 1 step or Jump over a goat to eat it. Win by eating 5 goats.</p>
-            <p style="color:#fff"><strong>🐐 Goats:</strong> Place 20 goats. Then move to trap Tigers. Win if Tigers cannot move.</p>
-            <button class="btn" style="width:100%" onclick="document.getElementById('rules-overlay').classList.add('hidden')">Back</button>
+            <h2 style="text-align: center; color:#ffd700">GAME RULES</h2>
+            <p style="color:#ddd"><strong>🐯 TIGERS (Hunter):</strong><br>Start in corners. Move 1 step or JUMP over a goat to eat it. Win by eating 5 goats.</p>
+            <p style="color:#ddd"><strong>🐐 GOATS (Defender):</strong><br>Place 20 goats on board. Then move to block paths. Win by trapping all Tigers.</p>
+            <button class="btn" style="width:100%" onclick="document.getElementById('rules-screen').classList.remove('active')">BACK</button>
         </div>
     </div>
 
-    <div id="stats-overlay" class="modal-overlay hidden">
+    <!-- STATS -->
+    <div id="stats-screen" class="modal-overlay">
         <div class="modal-box">
-            <h2 style="color:var(--gold)">Hunter Records</h2>
-            <p style="color:#fff">Tiger Wins: <span id="st-tiger" style="color:orange">0</span></p>
-            <p style="color:#fff">Goat Wins: <span id="st-goat" style="color:white">0</span></p>
-            <p style="color:#ccc">Total Games: <span id="st-total">0</span></p>
-            <button class="btn" style="width:100%" onclick="document.getElementById('stats-overlay').classList.add('hidden')">Back</button>
-            <button class="btn" style="width:100%; background: #333;" onclick="resetStats()">Reset Stats</button>
+            <h2>ACHIEVEMENTS</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;">
+                <div style="background:#222; padding:15px; border:1px solid orange;">
+                    <div style="font-size:2rem">🐯</div>
+                    <div style="color:orange">WINS: <span id="stat-tiger">0</span></div>
+                </div>
+                <div style="background:#222; padding:15px; border:1px solid white;">
+                    <div style="font-size:2rem">🐐</div>
+                    <div style="color:white">WINS: <span id="stat-goat">0</span></div>
+                </div>
+            </div>
+            <button class="btn btn-red" onclick="resetStats()">RESET DATA</button>
+            <button class="btn" onclick="document.getElementById('stats-screen').classList.remove('active')">CLOSE</button>
+        </div>
+    </div>
+    
+    <!-- ONLINE LOBBY SIMULATION -->
+    <div id="online-screen" class="modal-overlay">
+        <div class="modal-box">
+            <h2>MULTIPLAYER LOBBY</h2>
+            <p style="color:#00f3ff; margin: 30px 0;">Searching for opponents...</p>
+            <div style="margin: 0 auto; width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #ffd700; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <button class="btn btn-red" style="margin-top: 30px;" onclick="document.getElementById('online-screen').classList.remove('active')">CANCEL</button>
         </div>
     </div>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    <!-- HUD -->
+    <div id="ui-layer" style="display:none;">
+        <div class="hud hud-top pointer-auto">
+            <h1 id="turn-txt">GOAT'S TURN</h1>
+            <div class="stat-row">Placed: <span id="cnt-placed">0</span>/20 | Dead: <span id="cnt-dead" style="color:red">0</span>/5</div>
+            <button class="btn" style="font-size: 0.8rem; padding: 5px 15px; margin-top:10px;" onclick="pauseGame()">PAUSE / MENU</button>
+        </div>
 
-        /* --- GAME VARIABLES --- */
+        <div class="hud hud-bottom pointer-auto">
+            <div id="msg-txt" style="font-weight: bold; margin-bottom: 10px; font-size: 1.2rem;">PLACE A GOAT</div>
+            <div id="undo-wrapper"><div id="undo-progress"></div></div>
+            <button id="btn-undo" class="btn" style="display:none; width: 100%; margin-top: 5px;" onclick="performUndo()">UNDO MOVE</button>
+        </div>
+
+        <div id="controls-hint">Rotate: Drag | Zoom: Scroll</div>
+    </div>
+
+    <script>
+        // --- CORE GAME ENGINE ---
         const TIGER=2, GOAT=1, EMPTY=0;
         let board = Array(25).fill(EMPTY);
-        let turn = 'goat';
-        let phase = 1;
-        let goatsPlaced=0, goatsDead=0;
-        let selectedIdx = null;
+        let turn = 'goat', phase = 1;
+        let goatsPlaced = 0, goatsDead = 0;
         let gameMode = 'friend';
-        let gameOver = false;
         
-        // Undo
-        let isWait = false;
-        let undoTimer = null;
-        let history = null;
-
-        // 3D Refs
         let scene, camera, renderer, controls;
-        let pieces = []; // Mesh array
-        const nodes = []; // Click targets
+        let pieces = [], clickTargets = [];
         let raycaster, mouse;
+        let particles = [];
         
-        // Adjacency
-        const ADJ = {};
-        for(let i=0; i<25; i++) {
-            ADJ[i]=[]; 
-            let r=Math.floor(i/5), c=i%5;
-            [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) ADJ[i].push(nr*5+nc)});
-            if(i%2===0) [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) ADJ[i].push(nr*5+nc)});
-        }
+        let selectedIdx = null;
+        let isAnimating = false;
+        let historyStack = null, undoTimer = null;
 
-        /* --- AUDIO --- */
-        function playSound(id) {
+        // --- 1. SETUP & LOADING ---
+        
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('loader').classList.remove('active');
+            document.getElementById('menu-screen').classList.add('active');
+            // Init Sound Context
+            playSound('sfx-bgm', 0.3);
+            init3D();
+        });
+
+        function playSound(id, vol=1) {
             try {
-                const el = document.getElementById(id);
-                el.currentTime = 0;
-                el.play().catch(e=>{});
+                const s = document.getElementById(id);
+                s.volume = vol;
+                if(s.paused) s.play().catch(e => console.log("Audio waiting for interaction"));
+                else s.currentTime = 0;
             } catch(e){}
         }
 
-        /* --- 3D SETUP --- */
         function init3D() {
             scene = new THREE.Scene();
-            // Fog for Jungle atmosphere
-            scene.fog = new THREE.FogExp2(0x1b5e20, 0.02);
+            scene.background = new THREE.Color(0x050505);
+            scene.fog = new THREE.FogExp2(0x050505, 0.02);
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 12, 12);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 18, 14);
             camera.lookAt(0,0,0);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -220,222 +211,236 @@
             renderer.shadowMap.enabled = true;
             document.body.appendChild(renderer.domElement);
 
-            controls = new OrbitControls(camera, renderer.domElement);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.maxPolarAngle = Math.PI/2 - 0.1; // Don't go under board
+            controls.maxPolarAngle = Math.PI/2 - 0.1;
 
-            // Lighting
-            const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambLight);
+            // Lights
+            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambient);
             
             const dirLight = new THREE.DirectionalLight(0xffd700, 1.5);
-            dirLight.position.set(5, 10, 5);
+            dirLight.position.set(10, 20, 10);
             dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 1024;
-            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
             scene.add(dirLight);
 
-            // Input
+            // Spotlight for drama
+            const spot = new THREE.SpotLight(0xff8800, 2);
+            spot.position.set(0, 15, 0);
+            spot.angle = 0.5;
+            spot.penumbra = 0.5;
+            scene.add(spot);
+
+            // Inputs
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
-            window.addEventListener('click', onMouseClick);
-            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('resize', onResize);
 
-            createJungleBoard();
+            createEnvironment();
             animate();
         }
 
-        function createJungleBoard() {
-            // 1. The Wooden Board Base
+        function createEnvironment() {
+            // Wood Board
             const boardGeo = new THREE.BoxGeometry(16, 1, 16);
-            const boardMat = new THREE.MeshStandardMaterial({ 
-                color: 0x5d4037, roughness: 0.8, metalness: 0.1
-            });
+            const boardMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.8 });
             const boardMesh = new THREE.Mesh(boardGeo, boardMat);
             boardMesh.position.y = -0.5;
             boardMesh.receiveShadow = true;
             scene.add(boardMesh);
 
-            // 2. The Gold Grid Lines
-            const lineMat = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 2 });
+            // Gold Lines
             const points = [];
             for(let i=0; i<25; i++) {
-                ADJ[i].forEach(n => {
-                    if(n > i) {
-                        let p1 = getCoord(i);
-                        let p2 = getCoord(n);
+                getAdj(i).forEach(n => {
+                    if(n>i) {
+                        let p1 = getCoord(i), p2 = getCoord(n);
                         points.push(new THREE.Vector3(p1.x, 0.05, p1.z));
                         points.push(new THREE.Vector3(p2.x, 0.05, p2.z));
                     }
                 });
             }
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xffd700 });
             const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
             const lines = new THREE.LineSegments(lineGeo, lineMat);
             scene.add(lines);
 
-            // 3. Invisible Nodes (Click Targets) & Decorative Studs
-            const studGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16);
-            const studMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
-            
+            // Click Targets
             for(let i=0; i<25; i++) {
                 let pos = getCoord(i);
-                
-                // Visual Gold Stud
-                const stud = new THREE.Mesh(studGeo, studMat);
+                // Visible gold stud
+                const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1), new THREE.MeshBasicMaterial({color: 0xffd700}));
                 stud.position.set(pos.x, 0.05, pos.z);
-                stud.receiveShadow = true;
                 scene.add(stud);
 
-                // Invisible Hitbox
-                const hitbox = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.5), new THREE.MeshBasicMaterial({visible: false}));
-                hitbox.position.set(pos.x, 0, pos.z);
-                hitbox.userData = { index: i };
-                scene.add(hitbox);
-                nodes.push(hitbox);
-
-                pieces.push(null);
+                // Invisible hitbox
+                const hit = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.5), new THREE.MeshBasicMaterial({visible:false}));
+                hit.position.set(pos.x, 0, pos.z);
+                hit.userData = { index: i };
+                scene.add(hit);
+                clickTargets.push(hit);
             }
         }
 
         function getCoord(idx) {
-            const row = Math.floor(idx/5);
-            const col = idx%5;
-            // Map 0..4 to -6..6
-            return { x: (col-2)*3, z: (row-2)*3 };
+            const r=Math.floor(idx/5), c=idx%5;
+            return { x: (c-2)*3, z: (r-2)*3 };
         }
 
-        /* --- PIECE MANAGEMENT --- */
-        function spawnPiece(idx, type) {
-            const pos = getCoord(idx);
-            let mesh;
-
-            if(type === TIGER) {
-                // Tiger: Orange Sphere
-                const geo = new THREE.SphereGeometry(1, 32, 32);
-                const mat = new THREE.MeshStandardMaterial({ color: 0xff6f00, roughness: 0.4 });
-                mesh = new THREE.Mesh(geo, mat);
-                mesh.userData = { type: TIGER };
-            } else {
-                // Goat: White Sphere (Marble)
-                const geo = new THREE.SphereGeometry(0.8, 32, 32);
-                const mat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.3 });
-                mesh = new THREE.Mesh(geo, mat);
-                mesh.userData = { type: GOAT };
-            }
-
-            mesh.position.set(pos.x, 5, pos.z); // Start in air
-            mesh.targetPos = new THREE.Vector3(pos.x, 1, pos.z); // Land pos
-            mesh.castShadow = true;
-            mesh.scale.set(0,0,0); // Grow in
-            
-            scene.add(mesh);
-            pieces[idx] = mesh;
+        function getAdj(i) {
+            let adj=[];
+            let r=Math.floor(i/5), c=i%5;
+            [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) adj.push(nr*5+nc)});
+            if(i%2===0) [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) adj.push(nr*5+nc)});
+            return adj;
         }
 
-        function moveVisualPiece(from, to) {
-            const mesh = pieces[from];
-            pieces[from] = null;
-            pieces[to] = mesh;
-            const target = getCoord(to);
-            mesh.targetPos.set(target.x, 1, target.z);
-        }
-
-        function removePiece(idx) {
-            const mesh = pieces[idx];
-            if(mesh) {
-                // Shrink out effect in animate loop would be better, but removing directly for simplicity
-                scene.remove(mesh);
-                pieces[idx] = null;
-            }
-        }
-
-        /* --- GAME LOGIC --- */
-        window.startGame = function(mode) {
-            gameMode = mode;
-            document.getElementById('menu-overlay').classList.add('hidden');
-            
-            // Reset
-            board.fill(EMPTY);
-            pieces.forEach(p => { if(p) scene.remove(p); });
-            pieces.fill(null);
-            
-            [0,4,20,24].forEach(i => { board[i]=TIGER; spawnPiece(i, TIGER); });
-            
-            turn = 'goat'; phase = 1; goatsPlaced=0; goatsDead=0;
-            selectedIdx = null; gameOver = false; isWait=false;
-            stopUndo();
-            updateHUD();
-        }
-
-        window.showMenu = function() { document.getElementById('menu-overlay').classList.remove('hidden'); }
-        window.showRules = function() { document.getElementById('rules-overlay').classList.remove('hidden'); }
-        window.showStats = function() { loadStats(); document.getElementById('stats-overlay').classList.remove('hidden'); }
-
-        function onMouseClick(e) {
-            if(gameOver || isWait) return;
-            if(gameMode === 'computer' && turn === 'tiger') return;
-
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-
-            const intersects = raycaster.intersectObjects(nodes);
-            if(intersects.length > 0) {
-                const idx = intersects[0].object.userData.index;
+        // --- 2. ANIMAL MODELS (PROCEDURAL) ---
+        class Animal {
+            constructor(type, idx) {
+                this.type = type;
+                this.mesh = new THREE.Group();
+                this.legs = [];
+                this.isWalking = false;
+                this.isDancing = false;
                 
-                if(turn === 'goat') goatInput(idx);
-                else tigerInput(idx);
-            }
-        }
+                const matBody = type===TIGER ? new THREE.MeshStandardMaterial({color: 0xff6f00}) : new THREE.MeshStandardMaterial({color: 0xeeeeee});
+                const matDetail = new THREE.MeshStandardMaterial({color: 0x111111}); // Stripes or Hooves
 
-        function goatInput(idx) {
-            if(phase === 1) {
-                if(board[idx] === EMPTY) commitMove(null, idx, 'place');
-            } else {
-                if(board[idx] === GOAT) { selectedIdx = idx; highlight(idx); playSound('sfx-wood'); }
-                else if(board[idx] === EMPTY && selectedIdx !== null) {
-                    if(ADJ[selectedIdx].includes(idx)) commitMove(selectedIdx, idx, 'move');
+                // Body
+                const bodyGeo = type===TIGER ? new THREE.BoxGeometry(1.2, 0.7, 1.6) : new THREE.BoxGeometry(0.8, 0.6, 1.0);
+                const body = new THREE.Mesh(bodyGeo, matBody);
+                body.position.y = type===TIGER ? 0.8 : 0.6;
+                body.castShadow = true;
+                this.mesh.add(body);
+
+                // Head
+                const headGeo = type===TIGER ? new THREE.BoxGeometry(0.9, 0.8, 0.9) : new THREE.BoxGeometry(0.5, 0.5, 0.6);
+                const head = new THREE.Mesh(headGeo, matBody);
+                head.position.set(0, type===TIGER?1.4:1.1, type===TIGER?0.8:0.6);
+                head.castShadow = true;
+                this.mesh.add(head);
+
+                // Legs
+                this.createLegs(matBody, type===TIGER?0.3:0.2, type===TIGER?0.8:0.6);
+
+                const pos = getCoord(idx);
+                this.mesh.position.set(pos.x, 0, pos.z);
+                scene.add(this.mesh);
+            }
+
+            createLegs(mat, w, h) {
+                const pos = [[-0.3, 0.5], [0.3, 0.5], [-0.3, -0.5], [0.3, -0.5]];
+                pos.forEach(p => {
+                    const leg = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat);
+                    const pivot = new THREE.Group();
+                    pivot.position.set(p[0], h, p[1]);
+                    leg.position.set(0, -h/2, 0);
+                    pivot.add(leg);
+                    this.mesh.add(pivot);
+                    this.legs.push(pivot);
+                });
+            }
+
+            update(time) {
+                if(this.isWalking) {
+                    const s = 15;
+                    this.legs[0].rotation.x = Math.sin(time*s)*0.6;
+                    this.legs[1].rotation.x = Math.cos(time*s)*0.6;
+                    this.legs[2].rotation.x = Math.cos(time*s)*0.6;
+                    this.legs[3].rotation.x = Math.sin(time*s)*0.6;
+                    this.mesh.position.y = Math.abs(Math.sin(time*s*2))*0.15;
+                } else if(this.isDancing) {
+                    this.mesh.position.y = Math.abs(Math.sin(time*10))*0.8;
+                    this.mesh.rotation.y += 0.1;
+                } else {
+                    this.mesh.position.y = 0;
+                    this.legs.forEach(l => l.rotation.x = 0);
                 }
             }
-        }
 
-        function tigerInput(idx) {
-            if(board[idx] === TIGER) { selectedIdx = idx; highlight(idx); playSound('sfx-wood'); }
-            else if(board[idx] === EMPTY && selectedIdx !== null) {
-                if(ADJ[selectedIdx].includes(idx)) commitMove(selectedIdx, idx, 'move');
-                else {
-                    let mid = getJump(selectedIdx, idx);
-                    if(mid !== -1) commitMove(selectedIdx, idx, 'eat', mid);
-                }
+            lookAt(idx) {
+                const t = getCoord(idx);
+                this.mesh.lookAt(t.x, this.mesh.position.y, t.z);
             }
         }
 
-        function commitMove(from, to, type, mid=null) {
-            history = { board:[...board], turn, phase, goatsPlaced, goatsDead, piecesData: [] };
-            // Simple backup for undo
+        // --- 3. LOGIC & INPUT ---
+        window.setGameMode = function(m) {
+            gameMode = m;
+            document.getElementById('menu-screen').classList.remove('active');
+            document.getElementById('ui-layer').style.display = 'flex';
+            resetGame();
+        };
+
+        window.pauseGame = function() {
+            document.getElementById('menu-screen').classList.add('active');
+        };
+
+        function resetGame() {
+            board.fill(EMPTY);
+            pieces.forEach(p => { if(p) scene.remove(p.mesh) });
+            pieces = new Array(25).fill(null);
             
-            if(type==='place') {
-                board[to]=GOAT; goatsPlaced++; if(goatsPlaced===20) phase=2;
-                spawnPiece(to, GOAT);
-                playSound('sfx-wood');
-            } else if(type==='move') {
-                board[to]=board[from]; board[from]=EMPTY;
-                moveVisualPiece(from, to);
-                playSound('sfx-wood');
-            } else if(type==='eat') {
-                board[to]=TIGER; board[from]=EMPTY; board[mid]=EMPTY;
-                goatsDead++;
-                moveVisualPiece(from, to);
-                removePiece(mid);
-                playSound('sfx-tiger');
-            }
+            [0,4,20,24].forEach(i => {
+                board[i] = TIGER;
+                pieces[i] = new Animal(TIGER, i);
+            });
 
-            // Play turn sounds
-            if(turn==='goat' && type!=='eat') playSound('sfx-goat');
-
-            selectedIdx = null; clearHighlight();
+            turn='goat'; phase=1; goatsPlaced=0; goatsDead=0;
+            isAnimating=false; stopUndo();
             updateHUD();
-            startUndo();
+        }
+
+        function onMouseDown(e) {
+            if(isAnimating) return;
+            mouse.x = (e.clientX/window.innerWidth)*2-1;
+            mouse.y = -(e.clientY/window.innerHeight)*2+1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(clickTargets);
+            if(hits.length > 0) {
+                const idx = hits[0].object.userData.index;
+                if(turn==='goat') handleGoat(idx);
+                else handleTiger(idx);
+            }
+        }
+
+        let highlightMesh = null;
+        function highlight(idx) {
+            if(highlightMesh) { scene.remove(highlightMesh); highlightMesh=null; }
+            if(idx===null) return;
+            const pos = getCoord(idx);
+            const geo = new THREE.RingGeometry(1, 1.2, 32);
+            const mat = new THREE.MeshBasicMaterial({color: 0xffff00, side: THREE.DoubleSide});
+            highlightMesh = new THREE.Mesh(geo, mat);
+            highlightMesh.rotation.x = -Math.PI/2;
+            highlightMesh.position.set(pos.x, 0.1, pos.z);
+            scene.add(highlightMesh);
+        }
+
+        function handleGoat(idx) {
+            if(phase===1) {
+                if(board[idx]===EMPTY) action(null, idx, 'place');
+            } else {
+                if(board[idx]===GOAT) { selectedIdx=idx; highlight(idx); playSound('sfx-step', 0.5); }
+                else if(board[idx]===EMPTY && selectedIdx!==null) {
+                    if(getAdj(selectedIdx).includes(idx)) action(selectedIdx, idx, 'move');
+                }
+            }
+        }
+
+        function handleTiger(idx) {
+            if(board[idx]===TIGER) { selectedIdx=idx; highlight(idx); playSound('sfx-roar', 0.4); }
+            else if(board[idx]===EMPTY && selectedIdx!==null) {
+                if(getAdj(selectedIdx).includes(idx)) action(selectedIdx, idx, 'move');
+                else {
+                    let m = getJump(selectedIdx, idx);
+                    if(m!==-1) action(selectedIdx, idx, 'eat', m);
+                }
+            }
         }
 
         function getJump(f, t) {
@@ -443,179 +448,234 @@
             let dr=r2-r1, dc=c2-c1;
             if((Math.abs(dr)===2&&dc===0)||(Math.abs(dc)===2&&dr===0)||(Math.abs(dr)===2&&Math.abs(dc)===2)) {
                 let m = (r1+dr/2)*5 + (c1+dc/2);
-                if(ADJ[f].includes(m) && ADJ[m].includes(t) && board[m]===GOAT) return m;
+                if(getAdj(f).includes(m) && getAdj(m).includes(t) && board[m]===GOAT) return m;
             }
             return -1;
         }
 
-        /* --- UNDO SYSTEM --- */
-        function startUndo() {
-            isWait = true;
-            document.getElementById('btn-undo').style.display='inline-block';
-            const bar = document.getElementById('undo-bar');
-            bar.style.transition='none'; bar.style.width='100%';
-            setTimeout(()=>{ bar.style.transition='width 4s linear'; bar.style.width='0%'; }, 50);
-            undoTimer = setTimeout(finalizeTurn, 4000);
-        }
-
-        window.undoMove = function() {
-            clearTimeout(undoTimer);
-            isWait = false;
-            // Full Reset Visuals for simplicity in this demo
-            board = history.board;
-            turn = history.turn;
-            phase = history.phase;
-            goatsPlaced = history.goatsPlaced;
-            goatsDead = history.goatsDead;
+        // --- 4. EXECUTION & ANIMATION ---
+        function action(from, to, type, mid=null) {
+            isAnimating = true;
+            highlight(null);
             
-            // Rebuild visual board
-            pieces.forEach(p => { if(p) scene.remove(p); });
-            pieces.fill(null);
-            board.forEach((v,i) => { if(v!==EMPTY) spawnPiece(i, v); });
+            // Undo Save
+            historyStack = { board:[...board], turn, phase, goatsPlaced, goatsDead };
 
-            stopUndo();
-            updateHUD();
+            if(type==='place') {
+                board[to]=GOAT; goatsPlaced++; if(goatsPlaced===20) phase=2;
+                const anim = new Animal(GOAT, to);
+                pieces[to] = anim;
+                anim.mesh.position.y = 10; // Sky drop
+                animateMove(anim, getCoord(to), 'drop', endTurn);
+                playSound('sfx-bleat');
+            }
+            else if(type==='move') {
+                board[to]=board[from]; board[from]=EMPTY;
+                const p = pieces[from]; pieces[to]=p; pieces[from]=null;
+                p.lookAt(to);
+                animateMove(p, getCoord(to), 'walk', endTurn);
+                playSound('sfx-step');
+            }
+            else if(type==='eat') {
+                board[to]=TIGER; board[from]=EMPTY; board[mid]=EMPTY;
+                goatsDead++;
+                const p = pieces[from]; pieces[to]=p; pieces[from]=null;
+                const v = pieces[mid]; pieces[mid]=null;
+                p.lookAt(to);
+                playSound('sfx-roar');
+                animateMove(p, getCoord(to), 'jump', () => {
+                    spawnExplosion(v.mesh.position);
+                    scene.remove(v.mesh);
+                    endTurn();
+                });
+            }
+            selectedIdx = null;
         }
 
-        function stopUndo() {
-            isWait = false;
-            document.getElementById('btn-undo').style.display='none';
-        }
-
-        function finalizeTurn() {
-            stopUndo();
-            if(checkWin()) return;
-            turn = (turn==='goat')?'tiger':'goat';
-            updateHUD();
-            if(gameMode === 'computer' && turn === 'tiger') setTimeout(aiMove, 1000);
-        }
-
-        function checkWin() {
-            // Tiger Win
-            if(goatsDead >= 5) { endGame('Tiger'); return true; }
+        function animateMove(obj, target, mode, cb) {
+            const start = obj.mesh.position.clone();
+            let dur = mode==='jump'?800:500;
+            if(mode==='walk') dur=600;
+            const t0 = Date.now();
             
-            // Goat Win (Trap)
-            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
-            let anyMove = false;
+            obj.isWalking = (mode==='walk');
 
-            for(let t of tigers) {
-                // Check normal moves
-                for(let n of ADJ[t]) { if(board[n]===EMPTY) { anyMove=true; break; } }
-                if(anyMove) break;
-                // Check jumps
-                for(let i=0; i<25; i++) {
-                    if(board[i]===EMPTY && getJump(t, i)!==-1) { anyMove=true; break; }
+            function loop() {
+                const p = Math.min((Date.now()-t0)/dur, 1);
+                
+                if(mode==='drop') {
+                    obj.mesh.position.y = (1-p)*10;
+                } else if(mode==='jump') {
+                    obj.mesh.position.x = THREE.MathUtils.lerp(start.x, target.x, p);
+                    obj.mesh.position.z = THREE.MathUtils.lerp(start.z, target.z, p);
+                    obj.mesh.position.y = Math.sin(p*Math.PI)*4; 
+                } else {
+                    obj.mesh.position.x = THREE.MathUtils.lerp(start.x, target.x, p);
+                    obj.mesh.position.z = THREE.MathUtils.lerp(start.z, target.z, p);
                 }
-                if(anyMove) break;
+
+                if(p<1) requestAnimationFrame(loop);
+                else {
+                    obj.mesh.position.set(target.x, 0, target.z);
+                    obj.isWalking=false;
+                    cb();
+                }
+            }
+            loop();
+        }
+
+        function spawnExplosion(pos) {
+            for(let i=0; i<15; i++) {
+                const m = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2), new THREE.MeshBasicMaterial({color: 0xffffff}));
+                m.position.copy(pos);
+                m.userData = { vel: new THREE.Vector3((Math.random()-0.5), Math.random(), (Math.random()-0.5)) };
+                scene.add(m);
+                particles.push(m);
+            }
+        }
+
+        // --- 5. GAME LOOP & STATE ---
+        function endTurn() {
+            // Check Win
+            if(goatsDead>=5) { endGame("TIGERS WIN!"); return; }
+            
+            // Check Trap
+            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
+            let trapped = true;
+            tigers.forEach(t=>{
+                let moves = false;
+                getAdj(t).forEach(n=>{if(board[n]===EMPTY) moves=true;});
+                for(let i=0; i<25; i++) if(board[i]===EMPTY && getJump(t, i)!==-1) moves=true;
+                if(moves) trapped=false;
+            });
+
+            if(trapped) { 
+                pieces.forEach(p=>{if(p && p.type===GOAT) p.isDancing=true;});
+                playSound('sfx-win');
+                endGame("GOATS WIN!"); 
+                return; 
             }
 
-            if(!anyMove) { endGame('Goat'); return true; }
-            return false;
+            turn = turn==='goat'?'tiger':'goat';
+            startUndo();
+            updateHUD();
+            isAnimating = false;
+
+            if(gameMode==='computer' && turn==='tiger') setTimeout(aiMove, 1000);
         }
 
-        function endGame(winner) {
-            gameOver = true;
-            playSound('sfx-win');
-            saveStats(winner);
-            setTimeout(() => {
-                alert(winner + " Wins!");
-                document.getElementById('menu-overlay').classList.remove('hidden');
-            }, 500);
+        function endGame(msg) {
+            document.getElementById('msg-txt').innerText = msg;
+            let s = JSON.parse(localStorage.getItem('bcStats'))||{t:0, g:0};
+            if(msg.includes('TIGER')) s.t++; else s.g++;
+            localStorage.setItem('bcStats', JSON.stringify(s));
+            
+            setTimeout(()=>{
+                alert(msg);
+                pieces.forEach(p=>{if(p) p.isDancing=false;});
+            }, 2000);
         }
 
-        /* --- AI --- */
+        function updateHUD() {
+            const h = document.getElementById('turn-txt');
+            const m = document.getElementById('msg-txt');
+            if(turn==='goat') {
+                h.innerText="GOAT'S TURN"; h.style.color="#fff";
+                m.innerText=phase===1?"PLACE A GOAT":"MOVE A GOAT";
+            } else {
+                h.innerText="TIGER'S TURN"; h.style.color="#ffd700";
+                m.innerText="HUNT OR MOVE";
+            }
+            document.getElementById('cnt-placed').innerText = goatsPlaced;
+            document.getElementById('cnt-dead').innerText = goatsDead;
+        }
+
+        // Undo
+        function startUndo() {
+            document.getElementById('btn-undo').style.display='block';
+            document.getElementById('undo-wrapper').style.display='block';
+            const bar = document.getElementById('undo-progress');
+            bar.style.transition='none'; bar.style.width='100%';
+            setTimeout(()=>{bar.style.transition='width 4s linear'; bar.style.width='0%';},50);
+            undoTimer = setTimeout(stopUndo, 4000);
+        }
+        function stopUndo() {
+            document.getElementById('btn-undo').style.display='none';
+            document.getElementById('undo-wrapper').style.display='none';
+        }
+        window.performUndo = function() {
+            clearTimeout(undoTimer); stopUndo();
+            if(!historyStack) return;
+            // Restore
+            board = historyStack.board;
+            turn = historyStack.turn;
+            phase = historyStack.phase;
+            goatsPlaced = historyStack.goatsPlaced;
+            goatsDead = historyStack.goatsDead;
+            // Visual Reset
+            pieces.forEach(p=>{if(p) scene.remove(p.mesh)});
+            pieces = new Array(25).fill(null);
+            board.forEach((v,i)=>{if(v!==EMPTY) pieces[i]=new Animal(v, i)});
+            updateHUD();
+        }
+
+        // AI
         function aiMove() {
             let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
             // 1. Capture
             for(let t of tigers) {
                 for(let i=0; i<25; i++) {
                     if(board[i]===EMPTY) {
-                        let m = getJump(t, i);
-                        if(m!==-1) { commitMove(t, i, 'eat', m); return; }
+                        let m=getJump(t, i);
+                        if(m!==-1) { action(t, i, 'eat', m); return; }
                     }
                 }
             }
             // 2. Random
-            let moves = [];
+            let moves=[];
             for(let t of tigers) {
-                ADJ[t].forEach(n=>{ if(board[n]===EMPTY) moves.push({f:t, t:n}); });
+                getAdj(t).forEach(n=>{if(board[n]===EMPTY) moves.push({f:t, t:n})});
             }
             if(moves.length>0) {
-                let mv = moves[Math.floor(Math.random()*moves.length)];
-                commitMove(mv.f, mv.t, 'move');
+                let mv=moves[Math.floor(Math.random()*moves.length)];
+                action(mv.f, mv.t, 'move');
             } else {
-                finalizeTurn();
+                endTurn();
             }
         }
 
-        /* --- VISUAL HELPERS --- */
-        let highlightMesh = null;
-        function highlight(idx) {
-            clearHighlight();
-            const pos = getCoord(idx);
-            const geo = new THREE.RingGeometry(1, 1.2, 32);
-            const mat = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
-            highlightMesh = new THREE.Mesh(geo, mat);
-            highlightMesh.rotation.x = -Math.PI/2;
-            highlightMesh.position.set(pos.x, 0.1, pos.z);
-            scene.add(highlightMesh);
-        }
-        function clearHighlight() {
-            if(highlightMesh) { scene.remove(highlightMesh); highlightMesh=null; }
-        }
-
-        function updateHUD() {
-            const t = document.getElementById('turn-txt');
-            const m = document.getElementById('msg-box');
-            if(turn==='goat') {
-                t.innerText = "Goat's Turn"; t.style.color="#fff";
-                m.innerText = phase===1?"Drop a Goat":"Move a Goat";
-            } else {
-                t.innerText = "Tiger's Turn"; t.style.color="#ff9800";
-                m.innerText = "Hunt or Move";
-            }
-            document.getElementById('ui-placed').innerText = goatsPlaced;
-            document.getElementById('ui-dead').innerText = goatsDead;
-        }
-
+        // Helpers
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
-
-            // Smooth Piece Movement
-            pieces.forEach(p => {
-                if(p) {
-                    // Lerp position
-                    p.position.lerp(p.targetPos, 0.1);
-                    // Scale animation (pop in)
-                    if(p.scale.x < 1) { p.scale.addScalar(0.05); }
-                }
-            });
-
+            const time = Date.now()*0.001;
+            pieces.forEach(p=>{if(p) p.update(time)});
+            for(let i=particles.length-1; i>=0; i--) {
+                let p=particles[i];
+                p.position.add(p.userData.vel);
+                p.scale.subScalar(0.02);
+                if(p.scale.x<=0) { scene.remove(p); particles.splice(i,1); }
+            }
             renderer.render(scene, camera);
         }
+        function onResize(){ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); }
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth/window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        // Extras
+        window.showOnlineLobby = function() { document.getElementById('online-screen').classList.add('active'); }
+        window.showStats = function() {
+            let s=JSON.parse(localStorage.getItem('bcStats'))||{t:0, g:0};
+            document.getElementById('stat-tiger').innerText=s.t;
+            document.getElementById('stat-goat').innerText=s.g;
+            document.getElementById('stats-screen').classList.add('active');
         }
-        
-        // Stats Logic
-        function loadStats() {
-            let s = JSON.parse(localStorage.getItem('jgStats')) || {g:0, t:0, tot:0};
-            document.getElementById('st-goat').innerText = s.g;
-            document.getElementById('st-tiger').innerText = s.t;
-            document.getElementById('st-total').innerText = s.tot;
-        }
-        function saveStats(w) {
-            let s = JSON.parse(localStorage.getItem('jgStats')) || {g:0, t:0, tot:0};
-            s.tot++; if(w==='Goat') s.g++; else s.t++;
-            localStorage.setItem('jgStats', JSON.stringify(s));
-        }
-        window.resetStats = function() { localStorage.removeItem('jgStats'); loadStats(); }
+        window.showRules=function(){document.getElementById('rules-screen').classList.add('active');}
+        window.resetStats=function(){localStorage.removeItem('bcStats'); window.showStats();}
 
-        init3D();
+        // CSS Animation for spinner
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+
     </script>
 </body>
 </html>
