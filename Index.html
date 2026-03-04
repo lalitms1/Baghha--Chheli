@@ -7,7 +7,7 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
-        /* --- UI LAYER --- */
+        /* --- LAYOUT --- */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; z-index: 10; }
         .pointer-auto { pointer-events: auto; }
 
@@ -20,11 +20,12 @@
             border-radius: 8px;
             text-align: center;
             box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            transition: 0.3s;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
         }
 
-        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px #ffd700; }
-        .stat-row { font-size: 0.9rem; margin-top: 5px; color: #aaa; }
+        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px currentColor; }
+        .stat-row { font-size: 0.9rem; margin-top: 5px; opacity: 0.8; }
 
         /* BUTTONS */
         .btn {
@@ -32,13 +33,21 @@
             border: 1px solid #ffd700; color: #ffd700;
             padding: 12px 25px; cursor: pointer; font-weight: bold;
             text-transform: uppercase; border-radius: 4px;
-            margin: 5px; transition: 0.2s; font-size: 1rem;
+            margin: 5px; transition: 0.2s; font-size: 0.9rem;
         }
         .btn:hover { background: #ffd700; color: #000; box-shadow: 0 0 20px #ffd700; transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
-        
         .btn-red { border-color: #ff3d00; color: #ff3d00; background: #300; }
         .btn-red:hover { background: #ff3d00; color: #fff; }
+
+        /* THEME OVERRIDES */
+        body.theme-cyber .hud { border-color: #00f3ff; color: #00f3ff; background: rgba(0, 10, 20, 0.9); }
+        body.theme-cyber .btn { border-color: #00f3ff; color: #00f3ff; background: #000; }
+        body.theme-cyber .btn:hover { background: #00f3ff; color: #000; box-shadow: 0 0 20px #00f3ff; }
+
+        body.theme-magma .hud { border-color: #ff5722; color: #ff5722; background: rgba(20, 5, 0, 0.9); }
+        body.theme-magma .btn { border-color: #ff5722; color: #ff5722; background: #200; }
+        body.theme-magma .btn:hover { background: #ff5722; color: #fff; box-shadow: 0 0 20px #ff5722; }
 
         /* MODALS */
         .modal-overlay {
@@ -50,29 +59,31 @@
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
         .modal-box {
-            background: #111; border: 4px solid #ffd700;
+            background: #050505; border: 4px solid #ffd700;
             padding: 40px; text-align: center; max-width: 500px;
-            box-shadow: 0 0 50px rgba(255, 165, 0, 0.2);
+            box-shadow: 0 0 80px rgba(255, 165, 0, 0.2);
             position: relative;
         }
+        body.theme-cyber .modal-box { border-color: #00f3ff; box-shadow: 0 0 80px rgba(0, 243, 255, 0.2); }
+        body.theme-magma .modal-box { border-color: #ff5722; box-shadow: 0 0 80px rgba(255, 87, 34, 0.2); }
 
-        /* LOADING SCREEN */
-        #loader { opacity: 1; pointer-events: auto; z-index: 200; background: #000; color: #ffd700; flex-direction: column; }
+        /* LOADING SCREEN - High Z-Index to stay on top */
+        #loader { opacity: 1; pointer-events: auto; z-index: 9999; background: #000; color: #ffd700; flex-direction: column; }
         
         /* UNDO BAR */
         #undo-wrapper { width: 100%; height: 6px; background: #333; margin-top: 10px; border-radius: 3px; overflow: hidden; display: none; }
-        #undo-progress { width: 100%; height: 100%; background: #ffd700; transition: width 4s linear; }
+        #undo-progress { width: 100%; height: 100%; background: currentColor; transition: width 4s linear; }
 
         #hint { position: absolute; bottom: 10px; right: 10px; color: rgba(255,255,255,0.3); font-size: 0.8rem; }
     </style>
     
-    <!-- LIBRARIES (Stable Global Build) -->
+    <!-- LIBRARIES -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body class="theme-jungle">
 
-    <!-- SOUNDS -->
+    <!-- AUDIO -->
     <audio id="sfx-bgm" loop><source src="https://cdn.pixabay.com/audio/2022/08/02/audio_884fe92c21.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-roar" src="https://cdn.pixabay.com/audio/2022/10/16/audio_10629734ea.mp3"></audio>
     <audio id="sfx-bleat" src="https://cdn.pixabay.com/audio/2022/03/15/audio_736675271a.mp3"></audio>
@@ -82,9 +93,8 @@
     <!-- LOADING SCREEN -->
     <div id="loader" class="modal-overlay active">
         <h1 style="font-size: 2.5rem; margin-bottom: 20px;">BAGH CHAL 7D</h1>
-        <div id="loader-status" style="color:#888;">Generating Jungle Environment...</div>
-        <!-- Button is hidden initially, shown via JS -->
-        <button id="btn-start-game" class="btn" style="margin-top: 40px; font-size: 1.2rem; padding: 15px 40px; display: none;">ENTER WORLD</button>
+        <div id="loader-txt" style="color:#888;">Generating Jungle Environment...</div>
+        <button id="btn-enter-world" class="btn" style="margin-top: 40px; font-size: 1.2rem; padding: 15px 40px; display: none;">ENTER WORLD</button>
     </div>
 
     <!-- MAIN MENU -->
@@ -121,7 +131,7 @@
         <div id="hint">Rotate: Drag | Zoom: Scroll</div>
     </div>
 
-    <!-- OVERLAYS -->
+    <!-- OVERLAYS (Rules, Online, Stats) -->
     <div id="rules-screen" class="modal-overlay">
         <div class="modal-box" style="text-align: left;">
             <h2>RULES</h2>
@@ -153,7 +163,7 @@
     </div>
 
     <script>
-        // --- GAME CONSTANTS ---
+        // --- CORE GAME STATE ---
         const TIGER=2, GOAT=1, EMPTY=0;
         let board = Array(25).fill(EMPTY);
         let turn='goat', phase=1, goatsPlaced=0, goatsDead=0;
@@ -167,53 +177,61 @@
         let undoTimer=null, historyStack=null;
         let currentTheme = 'jungle';
 
+        // THEMES CONFIG
         const THEMES = {
             jungle: { bg: 0x050505, fog: 0x050505, board: 0x3e2723, line: 0xffd700, tiger: 0xff6f00, goat: 0xeeeeee },
             cyber:  { bg: 0x000000, fog: 0x000000, board: 0x111111, line: 0x00f3ff, tiger: 0xff003c, goat: 0x00f3ff },
             magma:  { bg: 0x1a0500, fog: 0x1a0500, board: 0x200500, line: 0xff5722, tiger: 0xffab91, goat: 0x5d4037 }
         };
 
-        // --- 1. INITIALIZATION SEQUENCE ---
+        // --- 1. STARTUP SEQUENCE (BULLETPROOF) ---
         
-        // Wait for page load
-        window.addEventListener('load', function() {
-            // Initialize 3D immediately
+        window.onload = function() {
+            // Check if Three.js loaded
+            if (typeof THREE === 'undefined') {
+                document.getElementById('loader-txt').innerHTML = "Error: Three.js library failed to load.<br>Check internet connection.";
+                document.getElementById('loader-txt').style.color = "red";
+                return;
+            }
+
+            // Initialize 3D Engine immediately in background
             try {
-                if(typeof THREE === 'undefined') throw new Error("3D Engine failed to load. Check internet.");
                 init3D();
-                
                 // Show Button
-                const btn = document.getElementById('btn-start-game');
+                const btn = document.getElementById('btn-enter-world');
                 btn.style.display = 'inline-block';
-                document.getElementById('loader-status').innerText = "System Ready";
+                document.getElementById('loader-txt').innerText = "System Ready";
+                document.getElementById('loader-txt').style.color = "#4caf50";
                 
-                // Add Click Listener
+                // Add Click Handler
                 btn.onclick = function() {
-                    document.getElementById('loader').classList.remove('active');
+                    // Force hide loader
+                    document.getElementById('loader').style.display = 'none'; 
                     document.getElementById('menu-screen').classList.add('active');
-                    playSound('sfx-bgm', 0.2);
-                    resetGame(true); // Quiet reset
+                    
+                    // Try Audio
+                    try { playSound('sfx-bgm', 0.2); } catch(e){}
+                    
+                    // Reset game for menu BG
+                    resetGame(true);
                 };
             } catch(e) {
-                document.getElementById('loader-status').innerText = "Error: " + e.message;
-                document.getElementById('loader-status').style.color = "red";
+                console.error(e);
+                alert("Game Engine Error: " + e.message);
             }
-        });
+        };
 
         function playSound(id, vol=1) {
             try {
                 const s = document.getElementById(id);
                 s.volume = vol;
-                if(s.paused) s.play().catch(e => {}); // Ignore play-before-interact errors
+                if(s.paused) s.play().catch(e => {}); 
                 else s.currentTime = 0;
             } catch(e){}
         }
 
         function init3D() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x050505);
-            scene.fog = new THREE.FogExp2(0x050505, 0.02);
-
             camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
             camera.position.set(0, 18, 14);
             camera.lookAt(0,0,0);
@@ -227,7 +245,6 @@
             controls.enableDamping = true;
             controls.maxPolarAngle = Math.PI/2 - 0.1;
 
-            // Input
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
             window.addEventListener('mousedown', onMouseDown);
@@ -237,12 +254,14 @@
             animate();
         }
 
-        // --- 2. ENVIRONMENT & THEMES ---
+        // --- 2. ENVIRONMENT ---
         window.cycleTheme = function() {
             const keys = Object.keys(THEMES);
             let idx = keys.indexOf(currentTheme);
             currentTheme = keys[(idx+1)%keys.length];
             document.getElementById('lbl-theme').innerText = currentTheme.toUpperCase();
+            document.body.className = `theme-${currentTheme}`;
+            
             applyTheme(currentTheme);
             // Re-render
             createEnvironment();
@@ -256,9 +275,7 @@
             scene.background = new THREE.Color(t.bg);
             scene.fog = new THREE.FogExp2(t.fog, 0.02);
             
-            // Lighting Reset
-            scene.children = scene.children.filter(o => !o.isLight); 
-            
+            scene.children = scene.children.filter(o => !o.isLight); // Reset lights
             scene.add(new THREE.AmbientLight(0xffffff, key==='cyber'?0.2:0.4));
 
             if(key === 'cyber') {
@@ -317,11 +334,10 @@
             clickTargets = [];
             for(let i=0; i<25; i++) {
                 let p = getCoord(i);
-                // Visible Stud
                 const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.1,16), new THREE.MeshBasicMaterial({color: t.line}));
                 stud.position.set(p.x, 0.05, p.z);
                 group.add(stud);
-                // Invisible Hitbox
+                
                 const hit = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,0.5), new THREE.MeshBasicMaterial({visible:false}));
                 hit.position.set(p.x, 0, p.z);
                 hit.userData = { index: i };
@@ -331,7 +347,7 @@
             scene.add(group);
         }
 
-        // --- 3. ANIMAL CLASS ---
+        // --- 3. ANIMAL CLASS (PROCEDURAL) ---
         class Animal {
             constructor(type, idx) {
                 this.type = type;
@@ -341,6 +357,7 @@
                 
                 const t = THEMES[currentTheme];
                 const col = type===TIGER ? t.tiger : t.goat;
+                
                 const mat = currentTheme==='cyber' 
                     ? new THREE.MeshStandardMaterial({color: col, emissive: col, emissiveIntensity: 0.5})
                     : new THREE.MeshStandardMaterial({color: col, roughness: 0.5});
@@ -393,7 +410,7 @@
             }
         }
 
-        // --- 4. GAME LOGIC ---
+        // --- 4. GAMEPLAY ---
         window.startGame = function(mode) {
             gameMode = mode;
             document.getElementById('menu-screen').classList.remove('active');
@@ -423,9 +440,9 @@
 
         function onMouseDown(e) {
             if(isAnimating) return;
-            // Only interact if HUD is visible
+            // Only interact if HUD is visible (game active)
             if(document.getElementById('ui-layer').style.display === 'none') return;
-            
+
             mouse.x = (e.clientX/window.innerWidth)*2-1;
             mouse.y = -(e.clientY/window.innerHeight)*2+1;
             raycaster.setFromCamera(mouse, camera);
@@ -529,7 +546,6 @@
         }
 
         function endTurn() {
-            // Check Win Conditions
             if(goatsDead >= 5) { gameOver("TIGERS WIN!"); return; }
             
             let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
@@ -562,6 +578,7 @@
 
         function aiMove() {
             let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
+            // Capture
             for(let t of tigers) {
                 for(let i=0; i<25; i++) {
                     if(board[i]===EMPTY) {
@@ -570,6 +587,7 @@
                     }
                 }
             }
+            // Move
             let moves=[];
             for(let t of tigers) getAdj(t).forEach(n=>{if(board[n]===EMPTY) moves.push({f:t, t:n})});
             if(moves.length>0) {
@@ -612,7 +630,7 @@
             document.getElementById('cnt-dead').innerText=goatsDead;
         }
 
-        // --- OVERLAY HANDLERS ---
+        // --- OVERLAYS ---
         window.showOnline = function() { document.getElementById('online-screen').classList.add('active'); }
         window.showStats = function() {
             let s=JSON.parse(localStorage.getItem('bcStats'))||{t:0,g:0};
@@ -641,14 +659,12 @@
             if(!historyStack) return;
             board=historyStack.board; turn=historyStack.turn; phase=historyStack.phase;
             goatsPlaced=historyStack.goatsPlaced; goatsDead=historyStack.goatsDead;
-            // Visual Reset
             pieces.forEach(p=>{if(p)scene.remove(p.mesh)});
             pieces=new Array(25).fill(null);
             board.forEach((v,i)=>{if(v!==EMPTY) pieces[i]=new Animal(v,i)});
             updateHUD();
         }
 
-        // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
@@ -664,7 +680,6 @@
         }
         function onResize(){camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight);}
         
-        // CSS Animation
         const st = document.createElement('style');
         st.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
         document.head.appendChild(st);
