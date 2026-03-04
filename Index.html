@@ -2,701 +2,620 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goat-Tiger: Jungle Holi Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Jungle 7D: Bagh Chal</title>
     <style>
         :root {
-            --bg-dark: #0f150f;
-            --accent-gold: #FFD700;
-            --board-wood: #8d6e63;
-            --tiger-color: #ff5722;
-            --goat-color: #f5f5f5;
-            --undo-color: #ff1744;
-            --glass: rgba(20, 30, 20, 0.85);
+            --wood-dark: #3e2723;
+            --wood-light: #8d6e63;
+            --gold: #ffd700;
+            --jungle-green: #1b5e20;
+            --glass: rgba(30, 20, 10, 0.85);
+        }
+        
+        body { 
+            margin: 0; overflow: hidden; 
+            background: radial-gradient(circle, #2e7d32 0%, #000000 100%);
+            font-family: 'Segoe UI', Tahoma, serif; 
+            user-select: none; 
         }
 
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            background-color: var(--bg-dark);
-            /* Jungle + Holi Vibe Background */
-            background-image: 
-                radial-gradient(circle at 20% 20%, rgba(255, 0, 100, 0.1), transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(255, 200, 0, 0.1), transparent 40%),
-                repeating-linear-gradient(45deg, #1b2e1b 0, #1b2e1b 10px, #142214 10px, #142214 20px);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            touch-action: none;
-            overflow: hidden;
-            user-select: none;
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
         }
 
-        /* --- SCREENS --- */
-        .screen {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            z-index: 100;
-            transition: opacity 0.3s ease;
+        .pointer-auto { pointer-events: auto; }
+
+        .panel {
+            background: var(--glass);
+            border: 2px solid var(--wood-light);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border-radius: 10px;
+            color: #fff;
+            padding: 15px; margin: 15px;
+            backdrop-filter: blur(4px);
+            text-align: center;
+        }
+
+        h1 { color: var(--gold); margin: 0 0 10px 0; text-shadow: 2px 2px 4px #000; font-family: 'Georgia', serif; }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(180deg, #5d4037, #3e2723);
+            border: 1px solid var(--gold);
+            color: var(--gold); padding: 10px 20px;
+            font-weight: bold; cursor: pointer;
+            margin: 5px; border-radius: 5px;
+            transition: 0.2s; width: 80%;
+        }
+        .btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+        .btn:active { transform: scale(0.95); }
+
+        .hud-top { align-self: flex-start; min-width: 250px; }
+        .hud-bottom { align-self: center; min-width: 300px; margin-bottom: 30px; }
+
+        #turn-txt { font-size: 1.4rem; font-weight: bold; text-transform: uppercase; }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: auto; z-index: 100;
         }
         .hidden { display: none !important; }
 
-        /* --- MENU --- */
-        h1 {
-            font-size: 3rem; color: var(--accent-gold);
-            text-shadow: 0 0 20px #ff9800, 2px 2px 0px #000;
-            margin-bottom: 20px; text-align: center;
-            font-family: 'Courier New', Courier, monospace;
-            letter-spacing: -2px;
+        .modal-box {
+            background: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), #4e342e;
+            border: 4px solid var(--gold);
+            padding: 30px; border-radius: 15px;
+            text-align: center; max-width: 400px;
+            box-shadow: 0 0 50px #000;
         }
 
-        .menu-btn {
-            background: linear-gradient(135deg, #2e7d32, #1b5e20);
-            border: 2px solid #66bb6a;
-            color: white; padding: 18px 25px; margin: 10px;
-            font-size: 1.1rem; border-radius: 50px;
-            cursor: pointer; width: 85%; max-width: 320px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
-            gap: 10px; transition: 0.2s;
-            text-transform: uppercase; font-weight: bold;
-        }
-        .menu-btn:active { transform: scale(0.95); }
-        .btn-secondary { background: linear-gradient(135deg, #455a64, #263238); border-color: #78909c; }
-
-        .modal {
-            background: var(--glass);
-            border: 2px solid var(--accent-gold);
-            padding: 20px; border-radius: 15px;
-            max-width: 90%; max-height: 70vh;
-            overflow-y: auto; text-align: left;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        /* Controls Hint */
+        #hint {
+            position: absolute; bottom: 10px; right: 10px;
+            color: rgba(255,255,255,0.6); font-size: 0.8rem;
+            text-align: right; pointer-events: none;
         }
 
-        /* --- BOARD UI --- */
-        #game-ui {
-            width: 100%; max-width: 450px;
-            display: flex; flex-direction: column; align-items: center;
-            padding-top: 15px;
-        }
-
-        .hud {
-            display: flex; justify-content: space-between; align-items: center;
-            width: 90%; background: rgba(255,255,255,0.1);
-            padding: 10px 20px; border-radius: 12px; margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .turn-txt { font-weight: bold; font-size: 1.2rem; }
-
-        .board-container {
-            position: relative;
-            width: 340px; height: 340px;
-            background: radial-gradient(#a1887f, #5d4037);
-            border: 10px solid #3e2723;
-            border-radius: 8px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-        }
-
-        svg { position: absolute; width: 100%; height: 100%; pointer-events: none; }
-        line { stroke: #3e2723; stroke-width: 4; stroke-linecap: round; }
-
-        .grid {
-            display: grid; grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            position: absolute; top:0; left:0; width:100%; height:100%;
-        }
-
-        .cell { display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
-
-        /* --- PIECES --- */
-        .piece {
-            width: 75%; height: 75%; z-index: 10;
-            filter: drop-shadow(0 4px 3px rgba(0,0,0,0.5));
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        /* TIGER SVG ICON */
-        .tiger-icon {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23FF9800'/%3E%3Cstop offset='100%25' stop-color='%23E65100'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23g)' stroke='%23BF360C' stroke-width='3'/%3E%3Cpath d='M20,30 Q50,60 80,30 Q90,10 70,20 Q50,0 30,20 Q10,10 20,30' fill='%23FFF3E0'/%3E%3Ccircle cx='35' cy='45' r='5' fill='black'/%3E%3Ccircle cx='65' cy='45' r='5' fill='black'/%3E%3Cpath d='M45,60 L50,65 L55,60' fill='black'/%3E%3Cpath d='M30,75 Q50,90 70,75' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M50,15 L45,30 L55,30 Z' fill='black'/%3E%3Cpath d='M10,50 L30,50' stroke='black' stroke-width='2'/%3E%3Cpath d='M90,50 L70,50' stroke='black' stroke-width='2'/%3E%3C/svg%3E");
-            background-size: contain; background-repeat: no-repeat;
-        }
-
-        /* GOAT SVG ICON */
-        .goat-icon {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='w' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='100%25' stop-color='%23cfd8dc'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='url(%23w)' stroke='%23546E7A' stroke-width='3'/%3E%3Cpath d='M20,30 C10,10 40,15 45,30' fill='%23B0BEC5' stroke='%23455A64' stroke-width='2'/%3E%3Cpath d='M80,30 C90,10 60,15 55,30' fill='%23B0BEC5' stroke='%23455A64' stroke-width='2'/%3E%3Ccircle cx='35' cy='50' r='4' fill='black'/%3E%3Ccircle cx='65' cy='50' r='4' fill='black'/%3E%3Cpath d='M45,65 L50,70 L55,65' fill='%23455A64'/%3E%3C/svg%3E");
-            background-size: contain; background-repeat: no-repeat;
-        }
-
-        .selected { transform: scale(1.3); filter: drop-shadow(0 0 15px gold); }
-
-        /* --- PARTICLES (HOLI EFFECT) --- */
-        .particle {
-            position: absolute; width: 8px; height: 8px; border-radius: 50%;
-            pointer-events: none; z-index: 50;
-        }
-
-        @keyframes explode {
-            0% { transform: translate(0,0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-        }
-
-        /* --- UNDO & TRACE --- */
-        .undo-bar {
-            width: 200px; height: 40px; margin-top: 15px;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .undo-btn {
-            background: var(--undo-color); color: white; border: none;
-            padding: 8px 20px; border-radius: 20px; font-weight: bold;
-            box-shadow: 0 0 10px red; cursor: pointer;
-            display: none; animation: popIn 0.3s;
-        }
-        @keyframes popIn { from {transform:scale(0);} to {transform:scale(1);} }
-
-        .timer-line {
-            width: 0%; height: 4px; background: var(--undo-color);
-            margin-top: 5px; border-radius: 2px;
-            transition: width 2s linear;
-        }
-
-        /* Trace circles */
-        .trace {
-            position: absolute; border-radius: 50%; width: 40%; height: 40%;
-            opacity: 0.5; animation: ping 1s infinite;
-        }
-        @keyframes ping { 0%{transform:scale(1);opacity:0.8;} 100%{transform:scale(2);opacity:0;} }
-
-        /* Toast */
-        #toast {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; padding: 10px 20px; border-radius: 30px;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 200;
-        }
-
-        .stat-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
-        }
-        .stat-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; text-align: center; }
+        /* Undo Bar */
+        #undo-bar-bg { width: 100%; height: 6px; background: #333; margin-top: 10px; border-radius: 3px; overflow: hidden;}
+        #undo-bar { width: 0%; height: 100%; background: var(--gold); transition: width 4s linear; }
 
     </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body>
 
-    <!-- MAIN MENU -->
-    <div id="screen-menu" class="screen">
-        <h1>GOAT & TIGER</h1>
-        
-        <button class="menu-btn" onclick="startGame('friend')">
-            <span style="font-size:1.5rem">👥</span> Play with Friend
-        </button>
-        <button class="menu-btn" onclick="startGame('computer')">
-            <span style="font-size:1.5rem">🤖</span> Play with Computer
-        </button>
-        <button class="menu-btn btn-secondary" onclick="showOnline()">
-            <span style="font-size:1.5rem">🌐</span> Play Online
-        </button>
-        
-        <div style="display: flex; width: 85%; max-width: 320px; gap: 10px;">
-            <button class="menu-btn btn-secondary" style="margin: 10px 0; width: 50%;" onclick="showRules()">
-                📜 Rules
-            </button>
-            <button class="menu-btn btn-secondary" style="margin: 10px 0; width: 50%;" onclick="showStats()">
-                🏆 Stats
-            </button>
+    <!-- AUDIO ASSETS -->
+    <audio id="sfx-tiger" src="https://cdn.pixabay.com/audio/2022/10/16/audio_10629734ea.mp3"></audio> <!-- Roar -->
+    <audio id="sfx-goat" src="https://cdn.pixabay.com/audio/2022/03/15/audio_736675271a.mp3"></audio> <!-- Bleat -->
+    <audio id="sfx-wood" src="https://cdn.pixabay.com/audio/2022/03/24/audio_33a7698572.mp3"></audio> <!-- Wood Tap -->
+    <audio id="sfx-win" src="https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c7443c.mp3"></audio> <!-- Victory -->
+
+    <!-- GAME UI -->
+    <div id="ui-layer">
+        <div class="panel hud-top pointer-auto">
+            <div id="turn-txt" style="color: #fff">Goat's Turn</div>
+            <div style="font-size: 0.9rem; margin-top: 5px; color: #ddd;">
+                Goats Placed: <span id="ui-placed">0</span>/20<br>
+                Goats Eaten: <span id="ui-dead" style="color: #ff5722">0</span>/5
+            </div>
+            <button class="btn" style="margin-top: 10px; font-size: 0.8rem; padding: 5px;" onclick="showMenu()">Pause / Menu</button>
+        </div>
+
+        <div class="panel hud-bottom pointer-auto">
+            <div id="msg-box" style="color: var(--gold); font-weight: bold; margin-bottom: 10px;">Place a Goat</div>
+            <button id="btn-undo" class="btn" style="background: #d32f2f; border-color: #ff5252; color: white; display:none;" onclick="undoMove()">Undo Move</button>
+            <div id="undo-bar-bg"><div id="undo-bar"></div></div>
         </div>
     </div>
 
-    <!-- RULES SCREEN -->
-    <div id="screen-rules" class="screen hidden">
-        <div class="modal">
-            <h2 style="color:var(--accent-gold); margin-top:0;">How to Play</h2>
-            <p><strong>🐯 Tigers (2 Players):</strong> Start at corners. Move 1 step or Jump over a Goat to eat it. Win by eating 5 Goats.</p>
-            <p><strong>🐐 Goats (1 Player):</strong> Place 20 goats one by one. Once all placed, move 1 step. Win by trapping all Tigers.</p>
-            <p><strong>Lines:</strong> You can only move along the drawn lines.</p>
-            <button class="menu-btn" style="width:100%; margin: 20px 0 0 0;" onclick="showMenu()">Back</button>
+    <div id="hint">Rotate: Drag | Zoom: Scroll | Pan: Right-Click</div>
+
+    <!-- MENUS -->
+    <div id="menu-overlay" class="modal-overlay">
+        <div class="modal-box">
+            <h1>JUNGLE 7D</h1>
+            <p style="color:#ccc; margin-bottom: 20px;">The Ancient Game of Strategy</p>
+            
+            <button class="btn" onclick="startGame('friend')">Play vs Friend</button>
+            <button class="btn" onclick="startGame('computer')">Play vs Computer</button>
+            <button class="btn" onclick="alert('Searching for Jungle Server...\n(Offline Demo)')">Play Online</button>
+            
+            <div style="display:flex; justify-content: center; margin-top: 10px;">
+                <button class="btn" style="width: 45%" onclick="showRules()">Rules</button>
+                <button class="btn" style="width: 45%" onclick="showStats()">Stats</button>
+            </div>
         </div>
     </div>
 
-    <!-- STATS SCREEN -->
-    <div id="screen-stats" class="screen hidden">
-        <div class="modal" style="width: 300px;">
-            <h2 style="color:var(--accent-gold); margin-top:0; text-align:center;">Achievements</h2>
-            <div class="stat-grid">
-                <div class="stat-box">
-                    <div style="font-size: 2rem;">🐯</div>
-                    <div>Tiger Wins</div>
-                    <div id="st-tiger" style="color: orange; font-weight: bold; font-size: 1.2rem;">0</div>
-                </div>
-                <div class="stat-box">
-                    <div style="font-size: 2rem;">🐐</div>
-                    <div>Goat Wins</div>
-                    <div id="st-goat" style="color: white; font-weight: bold; font-size: 1.2rem;">0</div>
-                </div>
-            </div>
-            <p style="text-align: center; margin-top: 15px;">Total Games: <span id="st-total">0</span></p>
-            <button class="menu-btn" style="width:100%; margin: 10px 0;" onclick="resetStats()">Reset Stats</button>
-            <button class="menu-btn btn-secondary" style="width:100%; margin: 0;" onclick="showMenu()">Back</button>
+    <div id="rules-overlay" class="modal-overlay hidden">
+        <div class="modal-box" style="text-align: left;">
+            <h2 style="color:var(--gold); text-align: center;">How to Play</h2>
+            <p style="color:#fff"><strong>🐯 Tigers:</strong> Start in corners. Move 1 step or Jump over a goat to eat it. Win by eating 5 goats.</p>
+            <p style="color:#fff"><strong>🐐 Goats:</strong> Place 20 goats. Then move to trap Tigers. Win if Tigers cannot move.</p>
+            <button class="btn" style="width:100%" onclick="document.getElementById('rules-overlay').classList.add('hidden')">Back</button>
         </div>
     </div>
 
-    <!-- GAME SCREEN -->
-    <div id="screen-game" class="screen hidden" style="background: transparent;">
-        <div id="game-ui">
-            <div class="hud">
-                <div class="turn-txt" id="txt-turn">Goat's Turn</div>
-                <div style="text-align: right; font-size: 0.8rem; color: #ccc;">
-                    Goats: <span id="txt-placed">0</span>/20<br>
-                    Dead: <span id="txt-dead" style="color: #ff5722">0</span>/5
-                </div>
-            </div>
-
-            <div class="board-container">
-                <svg id="svg-lines"></svg>
-                <div class="grid" id="grid"></div>
-            </div>
-
-            <!-- UNDO SECTION -->
-            <div class="undo-bar">
-                <button class="undo-btn" id="btn-undo" onclick="performUndo()">↩ UNDO MOVE</button>
-            </div>
-            <div style="width: 200px; background: rgba(255,255,255,0.1); border-radius: 2px;">
-                <div class="timer-line" id="line-timer"></div>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <button class="menu-btn btn-secondary" style="padding: 10px 20px;" onclick="quitGame()">Main Menu</button>
-            </div>
+    <div id="stats-overlay" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h2 style="color:var(--gold)">Hunter Records</h2>
+            <p style="color:#fff">Tiger Wins: <span id="st-tiger" style="color:orange">0</span></p>
+            <p style="color:#fff">Goat Wins: <span id="st-goat" style="color:white">0</span></p>
+            <p style="color:#ccc">Total Games: <span id="st-total">0</span></p>
+            <button class="btn" style="width:100%" onclick="document.getElementById('stats-overlay').classList.add('hidden')">Back</button>
+            <button class="btn" style="width:100%; background: #333;" onclick="resetStats()">Reset Stats</button>
         </div>
-        <div id="toast">Alert</div>
     </div>
 
-    <script>
-        // --- GAME CONSTANTS ---
-        const TIGER = 2, GOAT = 1, EMPTY = 0;
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        /* --- GAME VARIABLES --- */
+        const TIGER=2, GOAT=1, EMPTY=0;
         let board = Array(25).fill(EMPTY);
-        let turn = 'goat'; 
-        let phase = 1; 
-        let goatsPlaced = 0;
-        let goatsDead = 0;
-        let selected = null;
+        let turn = 'goat';
+        let phase = 1;
+        let goatsPlaced=0, goatsDead=0;
+        let selectedIdx = null;
         let gameMode = 'friend';
         let gameOver = false;
         
-        // --- UNDO STATE ---
-        let undoTimer = null;
+        // Undo
         let isWait = false;
+        let undoTimer = null;
         let history = null;
 
-        const ADJ = {}; // Adjacency Graph
-
-        // --- WEB AUDIO API (SYNTHESIZER) ---
-        // Generates sounds dynamically so no files are needed
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // 3D Refs
+        let scene, camera, renderer, controls;
+        let pieces = []; // Mesh array
+        const nodes = []; // Click targets
+        let raycaster, mouse;
         
-        function playTone(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            const now = audioCtx.currentTime;
-
-            if (type === 'goat') {
-                // High pitch bleat
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.linearRampToValueAtTime(300, now + 0.1);
-                gain.gain.setValueAtTime(0.1, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                osc.start(now); osc.stop(now + 0.2);
-            } 
-            else if (type === 'tiger') {
-                // Low roar saw wave
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(100, now);
-                osc.frequency.linearRampToValueAtTime(50, now + 0.3);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.linearRampToValueAtTime(0, now + 0.4);
-                osc.start(now); osc.stop(now + 0.4);
-            }
-            else if (type === 'capture') {
-                // Crunch noise (simulated with chaotic square)
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(50, now);
-                osc.frequency.linearRampToValueAtTime(20, now + 0.1);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.linearRampToValueAtTime(0, now + 0.15);
-                osc.start(now); osc.stop(now + 0.15);
-            }
-            else if (type === 'win') {
-                // Victory Arpeggio
-                playNote(523.25, 0, 0.1); // C
-                playNote(659.25, 0.1, 0.1); // E
-                playNote(783.99, 0.2, 0.4); // G
-            }
+        // Adjacency
+        const ADJ = {};
+        for(let i=0; i<25; i++) {
+            ADJ[i]=[]; 
+            let r=Math.floor(i/5), c=i%5;
+            [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) ADJ[i].push(nr*5+nc)});
+            if(i%2===0) [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(d=>{let nr=r+d[0],nc=c+d[1]; if(nr>=0&&nr<5&&nc>=0&&nc<5) ADJ[i].push(nr*5+nc)});
         }
 
-        function playNote(freq, delay, dur) {
-            const o = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            o.connect(g); g.connect(audioCtx.destination);
-            o.frequency.value = freq;
-            g.gain.value = 0.1;
-            g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + delay + dur);
-            o.start(audioCtx.currentTime + delay);
-            o.stop(audioCtx.currentTime + delay + dur);
+        /* --- AUDIO --- */
+        function playSound(id) {
+            try {
+                const el = document.getElementById(id);
+                el.currentTime = 0;
+                el.play().catch(e=>{});
+            } catch(e){}
         }
 
-        // --- INIT ---
-        function init() {
-            // Build Graph
+        /* --- 3D SETUP --- */
+        function init3D() {
+            scene = new THREE.Scene();
+            // Fog for Jungle atmosphere
+            scene.fog = new THREE.FogExp2(0x1b5e20, 0.02);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 12, 12);
+            camera.lookAt(0,0,0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.maxPolarAngle = Math.PI/2 - 0.1; // Don't go under board
+
+            // Lighting
+            const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffd700, 1.5);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            scene.add(dirLight);
+
+            // Input
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            window.addEventListener('click', onMouseClick);
+            window.addEventListener('resize', onWindowResize);
+
+            createJungleBoard();
+            animate();
+        }
+
+        function createJungleBoard() {
+            // 1. The Wooden Board Base
+            const boardGeo = new THREE.BoxGeometry(16, 1, 16);
+            const boardMat = new THREE.MeshStandardMaterial({ 
+                color: 0x5d4037, roughness: 0.8, metalness: 0.1
+            });
+            const boardMesh = new THREE.Mesh(boardGeo, boardMat);
+            boardMesh.position.y = -0.5;
+            boardMesh.receiveShadow = true;
+            scene.add(boardMesh);
+
+            // 2. The Gold Grid Lines
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 2 });
+            const points = [];
             for(let i=0; i<25; i++) {
-                ADJ[i] = [];
-                let r=Math.floor(i/5), c=i%5;
-                // Orthogonal
-                addLink(i, r, c, -1, 0); addLink(i, r, c, 1, 0);
-                addLink(i, r, c, 0, -1); addLink(i, r, c, 0, 1);
-                // Diagonal (Evens only)
-                if(i%2===0) {
-                    addLink(i, r, c, -1, -1); addLink(i, r, c, -1, 1);
-                    addLink(i, r, c, 1, -1); addLink(i, r, c, 1, 1);
-                }
+                ADJ[i].forEach(n => {
+                    if(n > i) {
+                        let p1 = getCoord(i);
+                        let p2 = getCoord(n);
+                        points.push(new THREE.Vector3(p1.x, 0.05, p1.z));
+                        points.push(new THREE.Vector3(p2.x, 0.05, p2.z));
+                    }
+                });
+            }
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+            const lines = new THREE.LineSegments(lineGeo, lineMat);
+            scene.add(lines);
+
+            // 3. Invisible Nodes (Click Targets) & Decorative Studs
+            const studGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16);
+            const studMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
+            
+            for(let i=0; i<25; i++) {
+                let pos = getCoord(i);
+                
+                // Visual Gold Stud
+                const stud = new THREE.Mesh(studGeo, studMat);
+                stud.position.set(pos.x, 0.05, pos.z);
+                stud.receiveShadow = true;
+                scene.add(stud);
+
+                // Invisible Hitbox
+                const hitbox = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.5), new THREE.MeshBasicMaterial({visible: false}));
+                hitbox.position.set(pos.x, 0, pos.z);
+                hitbox.userData = { index: i };
+                scene.add(hitbox);
+                nodes.push(hitbox);
+
+                pieces.push(null);
             }
         }
-        function addLink(i, r, c, dr, dc) {
-            let nr=r+dr, nc=c+dc;
-            if(nr>=0 && nr<5 && nc>=0 && nc<5) ADJ[i].push(nr*5+nc);
+
+        function getCoord(idx) {
+            const row = Math.floor(idx/5);
+            const col = idx%5;
+            // Map 0..4 to -6..6
+            return { x: (col-2)*3, z: (row-2)*3 };
         }
 
-        // --- NAVIGATION ---
-        function hideScreens() { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); }
-        function showMenu() { hideScreens(); document.getElementById('screen-menu').classList.remove('hidden'); }
-        function showRules() { hideScreens(); document.getElementById('screen-rules').classList.remove('hidden'); }
-        function showStats() { 
-            loadStats();
-            hideScreens(); document.getElementById('screen-stats').classList.remove('hidden'); 
+        /* --- PIECE MANAGEMENT --- */
+        function spawnPiece(idx, type) {
+            const pos = getCoord(idx);
+            let mesh;
+
+            if(type === TIGER) {
+                // Tiger: Orange Sphere
+                const geo = new THREE.SphereGeometry(1, 32, 32);
+                const mat = new THREE.MeshStandardMaterial({ color: 0xff6f00, roughness: 0.4 });
+                mesh = new THREE.Mesh(geo, mat);
+                mesh.userData = { type: TIGER };
+            } else {
+                // Goat: White Sphere (Marble)
+                const geo = new THREE.SphereGeometry(0.8, 32, 32);
+                const mat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.3 });
+                mesh = new THREE.Mesh(geo, mat);
+                mesh.userData = { type: GOAT };
+            }
+
+            mesh.position.set(pos.x, 5, pos.z); // Start in air
+            mesh.targetPos = new THREE.Vector3(pos.x, 1, pos.z); // Land pos
+            mesh.castShadow = true;
+            mesh.scale.set(0,0,0); // Grow in
+            
+            scene.add(mesh);
+            pieces[idx] = mesh;
         }
-        function showOnline() { alert("Connecting to Server...\n\n(This is a demo. Online play requires a backend server.)"); }
-        
-        function startGame(mode) {
+
+        function moveVisualPiece(from, to) {
+            const mesh = pieces[from];
+            pieces[from] = null;
+            pieces[to] = mesh;
+            const target = getCoord(to);
+            mesh.targetPos.set(target.x, 1, target.z);
+        }
+
+        function removePiece(idx) {
+            const mesh = pieces[idx];
+            if(mesh) {
+                // Shrink out effect in animate loop would be better, but removing directly for simplicity
+                scene.remove(mesh);
+                pieces[idx] = null;
+            }
+        }
+
+        /* --- GAME LOGIC --- */
+        window.startGame = function(mode) {
             gameMode = mode;
-            hideScreens();
-            document.getElementById('screen-game').classList.remove('hidden');
-            resetGame();
-            drawLines();
-        }
-
-        function quitGame() {
-            if(confirm("Exit to Main Menu?")) showMenu();
-        }
-
-        // --- GAME LOGIC ---
-        function resetGame() {
+            document.getElementById('menu-overlay').classList.add('hidden');
+            
+            // Reset
             board.fill(EMPTY);
-            board[0]=TIGER; board[4]=TIGER; board[20]=TIGER; board[24]=TIGER;
-            turn = 'goat'; phase = 1; goatsPlaced = 0; goatsDead = 0;
-            selected = null; gameOver = false; isWait = false;
-            document.getElementById('btn-undo').style.display = 'none';
-            document.getElementById('line-timer').style.width = '0';
-            updateHUD(); renderBoard();
+            pieces.forEach(p => { if(p) scene.remove(p); });
+            pieces.fill(null);
+            
+            [0,4,20,24].forEach(i => { board[i]=TIGER; spawnPiece(i, TIGER); });
+            
+            turn = 'goat'; phase = 1; goatsPlaced=0; goatsDead=0;
+            selectedIdx = null; gameOver = false; isWait=false;
+            stopUndo();
+            updateHUD();
         }
 
-        function handleCell(idx) {
+        window.showMenu = function() { document.getElementById('menu-overlay').classList.remove('hidden'); }
+        window.showRules = function() { document.getElementById('rules-overlay').classList.remove('hidden'); }
+        window.showStats = function() { loadStats(); document.getElementById('stats-overlay').classList.remove('hidden'); }
+
+        function onMouseClick(e) {
             if(gameOver || isWait) return;
             if(gameMode === 'computer' && turn === 'tiger') return;
 
-            if(turn === 'goat') inputGoat(idx);
-            else inputTiger(idx);
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(nodes);
+            if(intersects.length > 0) {
+                const idx = intersects[0].object.userData.index;
+                
+                if(turn === 'goat') goatInput(idx);
+                else tigerInput(idx);
+            }
         }
 
-        function inputGoat(idx) {
+        function goatInput(idx) {
             if(phase === 1) {
                 if(board[idx] === EMPTY) commitMove(null, idx, 'place');
             } else {
-                if(board[idx] === GOAT) { selected = idx; renderBoard(); }
-                else if(board[idx] === EMPTY && selected !== null) {
-                    if(ADJ[selected].includes(idx)) commitMove(selected, idx, 'move');
-                    else toast("Follow lines!");
+                if(board[idx] === GOAT) { selectedIdx = idx; highlight(idx); playSound('sfx-wood'); }
+                else if(board[idx] === EMPTY && selectedIdx !== null) {
+                    if(ADJ[selectedIdx].includes(idx)) commitMove(selectedIdx, idx, 'move');
                 }
             }
         }
 
-        function inputTiger(idx) {
-            if(board[idx] === TIGER) { selected = idx; renderBoard(); }
-            else if(board[idx] === EMPTY && selected !== null) {
-                if(ADJ[selected].includes(idx)) commitMove(selected, idx, 'move');
+        function tigerInput(idx) {
+            if(board[idx] === TIGER) { selectedIdx = idx; highlight(idx); playSound('sfx-wood'); }
+            else if(board[idx] === EMPTY && selectedIdx !== null) {
+                if(ADJ[selectedIdx].includes(idx)) commitMove(selectedIdx, idx, 'move');
                 else {
-                    let mid = getJump(selected, idx);
-                    if(mid !== -1) commitMove(selected, idx, 'eat', mid);
-                    else toast("Invalid Move");
+                    let mid = getJump(selectedIdx, idx);
+                    if(mid !== -1) commitMove(selectedIdx, idx, 'eat', mid);
                 }
             }
         }
 
         function commitMove(from, to, type, mid=null) {
-            // Save Undo State
-            history = { board:[...board], turn, phase, goatsPlaced, goatsDead };
+            history = { board:[...board], turn, phase, goatsPlaced, goatsDead, piecesData: [] };
+            // Simple backup for undo
             
-            // Execute
-            if(type === 'place') {
-                board[to] = GOAT; goatsPlaced++;
-                if(goatsPlaced===20) phase=2;
-                playTone('goat');
-                createSplash(to, ['#ffffff', '#bdbdbd', '#81d4fa']);
-            }
-            if(type === 'move') {
-                board[to] = board[from]; board[from] = EMPTY;
-                playTone(turn==='goat'?'goat':'tiger');
-                let colors = turn==='goat'?['#fff','#ccc'] : ['#ff9800', '#ff5722'];
-                createSplash(to, colors);
-            }
-            if(type === 'eat') {
-                board[to] = TIGER; board[from] = EMPTY; board[mid] = EMPTY;
+            if(type==='place') {
+                board[to]=GOAT; goatsPlaced++; if(goatsPlaced===20) phase=2;
+                spawnPiece(to, GOAT);
+                playSound('sfx-wood');
+            } else if(type==='move') {
+                board[to]=board[from]; board[from]=EMPTY;
+                moveVisualPiece(from, to);
+                playSound('sfx-wood');
+            } else if(type==='eat') {
+                board[to]=TIGER; board[from]=EMPTY; board[mid]=EMPTY;
                 goatsDead++;
-                playTone('capture');
-                createSplash(mid, ['#f44336', '#b71c1c']); // Red splash for blood/capture
-                createSplash(to, ['#ff9800', '#ff5722']);
+                moveVisualPiece(from, to);
+                removePiece(mid);
+                playSound('sfx-tiger');
             }
 
-            selected = null;
-            renderBoard(from, to); 
+            // Play turn sounds
+            if(turn==='goat' && type!=='eat') playSound('sfx-goat');
+
+            selectedIdx = null; clearHighlight();
             updateHUD();
-            startUndoTimer();
+            startUndo();
         }
 
-        // --- UNDO SYSTEM ---
-        function startUndoTimer() {
-            isWait = true;
-            document.getElementById('btn-undo').style.display = 'block';
-            let line = document.getElementById('line-timer');
-            line.style.transition = 'none'; line.style.width = '100%';
-            setTimeout(()=> { line.style.transition='width 2s linear'; line.style.width='0%'; }, 10);
-
-            undoTimer = setTimeout(() => {
-                isWait = false;
-                document.getElementById('btn-undo').style.display = 'none';
-                checkWin();
-                if(!gameOver) {
-                    turn = turn==='goat'?'tiger':'goat';
-                    updateHUD();
-                    renderBoard();
-                    if(gameMode === 'computer' && turn === 'tiger') setTimeout(aiMove, 600);
-                }
-            }, 2000);
-        }
-
-        function performUndo() {
-            clearTimeout(undoTimer);
-            board = history.board;
-            turn = history.turn;
-            phase = history.phase;
-            goatsPlaced = history.goatsPlaced;
-            goatsDead = history.goatsDead;
-            
-            isWait = false;
-            document.getElementById('btn-undo').style.display = 'none';
-            document.getElementById('line-timer').style.width = '0';
-            renderBoard(); updateHUD();
-            toast("Undo Successful");
-        }
-
-        // --- UTILS ---
         function getJump(f, t) {
-            let r1=Math.floor(f/5), c1=f%5;
-            let r2=Math.floor(t/5), c2=t%5;
+            let r1=Math.floor(f/5), c1=f%5, r2=Math.floor(t/5), c2=t%5;
             let dr=r2-r1, dc=c2-c1;
-            if((Math.abs(dr)===2 && dc===0) || (Math.abs(dc)===2 && dr===0) || (Math.abs(dr)===2 && Math.abs(dc)===2)) {
+            if((Math.abs(dr)===2&&dc===0)||(Math.abs(dc)===2&&dr===0)||(Math.abs(dr)===2&&Math.abs(dc)===2)) {
                 let m = (r1+dr/2)*5 + (c1+dc/2);
                 if(ADJ[f].includes(m) && ADJ[m].includes(t) && board[m]===GOAT) return m;
             }
             return -1;
         }
 
+        /* --- UNDO SYSTEM --- */
+        function startUndo() {
+            isWait = true;
+            document.getElementById('btn-undo').style.display='inline-block';
+            const bar = document.getElementById('undo-bar');
+            bar.style.transition='none'; bar.style.width='100%';
+            setTimeout(()=>{ bar.style.transition='width 4s linear'; bar.style.width='0%'; }, 50);
+            undoTimer = setTimeout(finalizeTurn, 4000);
+        }
+
+        window.undoMove = function() {
+            clearTimeout(undoTimer);
+            isWait = false;
+            // Full Reset Visuals for simplicity in this demo
+            board = history.board;
+            turn = history.turn;
+            phase = history.phase;
+            goatsPlaced = history.goatsPlaced;
+            goatsDead = history.goatsDead;
+            
+            // Rebuild visual board
+            pieces.forEach(p => { if(p) scene.remove(p); });
+            pieces.fill(null);
+            board.forEach((v,i) => { if(v!==EMPTY) spawnPiece(i, v); });
+
+            stopUndo();
+            updateHUD();
+        }
+
+        function stopUndo() {
+            isWait = false;
+            document.getElementById('btn-undo').style.display='none';
+        }
+
+        function finalizeTurn() {
+            stopUndo();
+            if(checkWin()) return;
+            turn = (turn==='goat')?'tiger':'goat';
+            updateHUD();
+            if(gameMode === 'computer' && turn === 'tiger') setTimeout(aiMove, 1000);
+        }
+
         function checkWin() {
-            if(goatsDead >= 5) { endGame('tiger'); return; }
-            // Check Trap
-            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(x=>x!==-1);
-            let trapped = true;
+            // Tiger Win
+            if(goatsDead >= 5) { endGame('Tiger'); return true; }
+            
+            // Goat Win (Trap)
+            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
+            let anyMove = false;
+
             for(let t of tigers) {
-                // Check move
-                for(let n of ADJ[t]) if(board[n]===EMPTY) { trapped=false; break; }
-                if(!trapped) break;
-                // Check jump
-                for(let n of ADJ[t]) {
-                    if(board[n]===GOAT) {
-                        let r1=Math.floor(t/5), c1=t%5;
-                        let r2=Math.floor(n/5), c2=n%5;
-                        let r3=r2+(r2-r1), c3=c2+(c2-c1);
-                        if(r3>=0&&r3<5&&c3>=0&&c3<5) {
-                            let dest=r3*5+c3;
-                            if(ADJ[n].includes(dest) && board[dest]===EMPTY) { trapped=false; break; }
-                        }
-                    }
+                // Check normal moves
+                for(let n of ADJ[t]) { if(board[n]===EMPTY) { anyMove=true; break; } }
+                if(anyMove) break;
+                // Check jumps
+                for(let i=0; i<25; i++) {
+                    if(board[i]===EMPTY && getJump(t, i)!==-1) { anyMove=true; break; }
                 }
-                if(!trapped) break;
+                if(anyMove) break;
             }
-            if(trapped) endGame('goat');
+
+            if(!anyMove) { endGame('Goat'); return true; }
+            return false;
         }
 
         function endGame(winner) {
             gameOver = true;
-            playTone('win');
+            playSound('sfx-win');
             saveStats(winner);
             setTimeout(() => {
-                alert(winner.toUpperCase() + " WINS!");
-                showMenu();
+                alert(winner + " Wins!");
+                document.getElementById('menu-overlay').classList.remove('hidden');
             }, 500);
         }
 
-        // --- AI ---
+        /* --- AI --- */
         function aiMove() {
-            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(x=>x!==-1);
+            let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
             // 1. Capture
             for(let t of tigers) {
                 for(let i=0; i<25; i++) {
                     if(board[i]===EMPTY) {
                         let m = getJump(t, i);
-                        if(m !== -1) {
-                            board[i]=TIGER; board[t]=EMPTY; board[m]=EMPTY;
-                            goatsDead++;
-                            playTone('capture'); createSplash(m,['red']); createSplash(i,['orange']);
-                            checkWin(); 
-                            if(!gameOver) { turn='goat'; updateHUD(); renderBoard(t, i); }
-                            return;
-                        }
+                        if(m!==-1) { commitMove(t, i, 'eat', m); return; }
                     }
                 }
             }
             // 2. Random
             let moves = [];
             for(let t of tigers) {
-                for(let n of ADJ[t]) if(board[n]===EMPTY) moves.push({f:t, t:n});
+                ADJ[t].forEach(n=>{ if(board[n]===EMPTY) moves.push({f:t, t:n}); });
             }
             if(moves.length>0) {
-                moves.sort(()=>Math.random()-0.5);
-                let mv = moves[0];
-                board[mv.t]=TIGER; board[mv.f]=EMPTY;
-                playTone('tiger'); createSplash(mv.t,['orange']);
-                turn='goat'; updateHUD(); renderBoard(mv.f, mv.t);
+                let mv = moves[Math.floor(Math.random()*moves.length)];
+                commitMove(mv.f, mv.t, 'move');
             } else {
-                turn='goat'; updateHUD(); // Trapped handling done next turn check
+                finalizeTurn();
             }
         }
 
-        // --- VISUALS ---
-        function renderBoard(traceF=null, traceT=null) {
-            const g = document.getElementById('grid'); g.innerHTML = '';
-            for(let i=0; i<25; i++) {
-                let cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.onclick = () => handleCell(i);
-
-                if(board[i] === TIGER) {
-                    let p = document.createElement('div'); p.className='piece tiger-icon';
-                    if(i===selected) p.classList.add('selected');
-                    cell.appendChild(p);
-                } else if(board[i] === GOAT) {
-                    let p = document.createElement('div'); p.className='piece goat-icon';
-                    if(i===selected) p.classList.add('selected');
-                    cell.appendChild(p);
-                }
-
-                // Traces
-                if(i===traceF) {
-                    let t = document.createElement('div'); t.className='trace';
-                    t.style.background = 'red'; cell.appendChild(t);
-                }
-                if(i===traceT) {
-                    let t = document.createElement('div'); t.className='trace';
-                    t.style.background = 'lime'; cell.appendChild(t);
-                }
-                g.appendChild(cell);
-            }
+        /* --- VISUAL HELPERS --- */
+        let highlightMesh = null;
+        function highlight(idx) {
+            clearHighlight();
+            const pos = getCoord(idx);
+            const geo = new THREE.RingGeometry(1, 1.2, 32);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+            highlightMesh = new THREE.Mesh(geo, mat);
+            highlightMesh.rotation.x = -Math.PI/2;
+            highlightMesh.position.set(pos.x, 0.1, pos.z);
+            scene.add(highlightMesh);
         }
-
-        function createSplash(idx, colors) {
-            let cell = document.getElementById('grid').children[idx];
-            let rect = cell.getBoundingClientRect();
-            // Create 10 particles
-            for(let i=0; i<12; i++) {
-                let p = document.createElement('div');
-                p.className = 'particle';
-                p.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
-                p.style.left = (rect.left + rect.width/2) + 'px';
-                p.style.top = (rect.top + rect.height/2) + 'px';
-                
-                // Random destination
-                let angle = Math.random() * Math.PI * 2;
-                let dist = 30 + Math.random() * 50;
-                let tx = Math.cos(angle) * dist + 'px';
-                let ty = Math.sin(angle) * dist + 'px';
-                
-                p.style.setProperty('--tx', tx);
-                p.style.setProperty('--ty', ty);
-                p.style.animation = `explode 0.6s ease-out forwards`;
-                
-                document.body.appendChild(p);
-                setTimeout(()=>p.remove(), 600);
-            }
-        }
-
-        function drawLines() {
-            const s = document.getElementById('svg-lines'); s.innerHTML='';
-            for(let i=0; i<25; i++) {
-                ADJ[i].forEach(n => {
-                    if(n>i) {
-                        let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                        let c1=i%5, r1=Math.floor(i/5), c2=n%5, r2=Math.floor(n/5);
-                        l.setAttribute("x1", (c1*20+10)+"%"); l.setAttribute("y1", (r1*20+10)+"%");
-                        l.setAttribute("x2", (c2*20+10)+"%"); l.setAttribute("y2", (r2*20+10)+"%");
-                        s.appendChild(l);
-                    }
-                })
-            }
+        function clearHighlight() {
+            if(highlightMesh) { scene.remove(highlightMesh); highlightMesh=null; }
         }
 
         function updateHUD() {
-            let t = document.getElementById('txt-turn');
-            t.innerText = turn==='goat' ? "Goat's Turn" : "Tiger's Turn";
-            t.style.color = turn==='goat' ? "#fff" : "#ff9800";
-            document.getElementById('txt-placed').innerText = goatsPlaced;
-            document.getElementById('txt-dead').innerText = goatsDead;
+            const t = document.getElementById('turn-txt');
+            const m = document.getElementById('msg-box');
+            if(turn==='goat') {
+                t.innerText = "Goat's Turn"; t.style.color="#fff";
+                m.innerText = phase===1?"Drop a Goat":"Move a Goat";
+            } else {
+                t.innerText = "Tiger's Turn"; t.style.color="#ff9800";
+                m.innerText = "Hunt or Move";
+            }
+            document.getElementById('ui-placed').innerText = goatsPlaced;
+            document.getElementById('ui-dead').innerText = goatsDead;
         }
 
-        function toast(m) {
-            let t = document.getElementById('toast');
-            t.innerText = m; t.style.opacity = '1';
-            setTimeout(()=>t.style.opacity='0', 2000);
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            // Smooth Piece Movement
+            pieces.forEach(p => {
+                if(p) {
+                    // Lerp position
+                    p.position.lerp(p.targetPos, 0.1);
+                    // Scale animation (pop in)
+                    if(p.scale.x < 1) { p.scale.addScalar(0.05); }
+                }
+            });
+
+            renderer.render(scene, camera);
         }
 
-        // --- STATS ---
-        function saveStats(w) {
-            let s = JSON.parse(localStorage.getItem('gtstats')) || {gw:0, tw:0, tot:0};
-            s.tot++;
-            if(w==='goat') s.gw++; else s.tw++;
-            localStorage.setItem('gtstats', JSON.stringify(s));
+        function onWindowResize() {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         }
+        
+        // Stats Logic
         function loadStats() {
-            let s = JSON.parse(localStorage.getItem('gtstats')) || {gw:0, tw:0, tot:0};
-            document.getElementById('st-goat').innerText = s.gw;
-            document.getElementById('st-tiger').innerText = s.tw;
+            let s = JSON.parse(localStorage.getItem('jgStats')) || {g:0, t:0, tot:0};
+            document.getElementById('st-goat').innerText = s.g;
+            document.getElementById('st-tiger').innerText = s.t;
             document.getElementById('st-total').innerText = s.tot;
         }
-        function resetStats() {
-            localStorage.removeItem('gtstats'); loadStats();
+        function saveStats(w) {
+            let s = JSON.parse(localStorage.getItem('jgStats')) || {g:0, t:0, tot:0};
+            s.tot++; if(w==='Goat') s.g++; else s.t++;
+            localStorage.setItem('jgStats', JSON.stringify(s));
         }
+        window.resetStats = function() { localStorage.removeItem('jgStats'); loadStats(); }
 
-        init();
+        init3D();
     </script>
 </body>
 </html>
