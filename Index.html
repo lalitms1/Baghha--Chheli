@@ -73,7 +73,6 @@
         .modal.active { display: block; }
 
     </style>
-    <!-- Import Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -87,9 +86,7 @@
 
     <div id="loader">INITIALIZING 7D MATRIX...</div>
 
-    <!-- UI LAYER -->
     <div id="ui-layer">
-        <!-- Top HUD -->
         <div class="hud-panel pointer-events-auto" style="align-self: flex-start;">
             <div id="turn-indicator" style="color: #00f3ff">DEFENDER (GOAT) TURN</div>
             <div style="font-size: 0.8rem; margin-top: 5px;">
@@ -97,16 +94,12 @@
             </div>
         </div>
 
-        <!-- Menu Button -->
         <div style="position: absolute; top: 20px; right: 20px;" class="pointer-events-auto">
             <button class="btn" onclick="showMenu()">MENU</button>
         </div>
 
-        <!-- Bottom Controls -->
         <div class="hud-panel pointer-events-auto" style="align-self: center; margin-bottom: 30px;">
             <div id="msg-box" style="margin-bottom: 10px; color: #ffeb3b;">SELECT TARGET COORDINATES</div>
-            <button id="btn-undo" class="btn btn-red" style="display:none;" onclick="undoMove()">REVERT TIMELINE</button>
-            <div id="undo-bar" style="height: 4px; background: var(--neon-red); width: 0%; margin-top: 5px; transition: width 4s linear;"></div>
         </div>
     </div>
 
@@ -116,7 +109,6 @@
         PAN: Right Click + Drag
     </div>
 
-    <!-- MAIN MENU MODAL -->
     <div id="menu-modal" class="modal active">
         <h1>DIMENSION X</h1>
         <p style="color: #aaa; margin-bottom: 20px;">HOLOGRAPHIC STRATEGY ENGINE</p>
@@ -140,9 +132,7 @@
         let selectedIdx = null;
         let gameMode = 'friend';
         let gameOver = false;
-        let isWait = false;
-        let undoTimer = null;
-        let history = null;
+        let isWait = false; // Prevents clicks during AI turn
 
         // Adjacency
         const ADJ = {};
@@ -156,13 +146,13 @@
         // --- THREE.JS VARIABLES ---
         let scene, camera, renderer, controls, composer;
         let raycaster, mouse;
-        const nodes = []; // Invisible click targets
-        const pieces = []; // Actual 3D meshes (index 0-24)
-        const particles = []; // Explosion particles
+        const nodes = []; 
+        const pieces = []; 
+        const particles = []; 
 
         // Colors
-        const COL_GOAT = 0x00f3ff; // Cyan
-        const COL_TIGER = 0xff003c; // Red
+        const COL_GOAT = 0x00f3ff;
+        const COL_TIGER = 0xff003c;
         const COL_LINE = 0x222244;
         const COL_SELECT = 0xffff00;
 
@@ -179,11 +169,11 @@
                 osc.type='sine'; osc.frequency.setValueAtTime(800, now);
                 g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now+0.1);
                 osc.start(now); osc.stop(now+0.1);
-            } else if(type==='move') { // Sci-fi whoosh
+            } else if(type==='move') {
                 osc.type='triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now+0.3);
                 g.gain.setValueAtTime(0.2, now); g.gain.linearRampToValueAtTime(0, now+0.3);
                 osc.start(now); osc.stop(now+0.3);
-            } else if(type==='eat') { // Explosion
+            } else if(type==='eat') {
                 osc.type='sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(10, now+0.4);
                 g.gain.setValueAtTime(0.3, now); g.gain.linearRampToValueAtTime(0, now+0.4);
                 osc.start(now); osc.stop(now+0.4);
@@ -192,22 +182,18 @@
 
         // --- INIT 3D WORLD ---
         function init3D() {
-            // Scene
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.02);
 
-            // Camera
             camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
             camera.position.set(0, 15, 15);
             camera.lookAt(0,0,0);
 
-            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // Post Processing (Bloom)
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0; bloomPass.strength = 1.2; bloomPass.radius = 0.5;
@@ -215,20 +201,17 @@
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
 
-            // Controls
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxPolarAngle = Math.PI / 2; // Don't go below ground
+            controls.maxPolarAngle = Math.PI / 2;
 
-            // Lighting
             const ambient = new THREE.AmbientLight(0x404040);
             scene.add(ambient);
             const pointLight = new THREE.PointLight(0xffffff, 1, 100);
             pointLight.position.set(0, 20, 0);
             scene.add(pointLight);
 
-            // Input
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
             window.addEventListener('click', onMouseClick);
@@ -237,17 +220,14 @@
             createBoardVisuals();
             createStarfield();
 
-            // Hide Loader
             document.getElementById('loader').style.display = 'none';
             animate();
         }
 
         function createBoardVisuals() {
-            // Grid Lines (Lasers)
             const material = new THREE.LineBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.3 });
             const points = [];
             
-            // Draw all connections
             for(let i=0; i<25; i++) {
                 ADJ[i].forEach(n => {
                     if(n > i) {
@@ -262,27 +242,24 @@
             const lines = new THREE.LineSegments(geometry, material);
             scene.add(lines);
 
-            // Create Invisible Click Targets (Nodes)
             const nodeGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.2, 16);
-            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.0 }); // Invisible
+            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.0 });
             const wireMat = new THREE.MeshBasicMaterial({ color: 0x111122, wireframe:true });
 
             for(let i=0; i<25; i++) {
                 let pos = getCoord(i);
                 
-                // Visual Base
                 const base = new THREE.Mesh(nodeGeo, wireMat);
                 base.position.set(pos.x, -0.1, pos.z);
                 scene.add(base);
 
-                // Click Hitbox
                 const hitbox = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 2), nodeMat);
                 hitbox.position.set(pos.x, 0, pos.z);
                 hitbox.userData = { index: i, type: 'node' };
                 scene.add(hitbox);
                 nodes.push(hitbox);
                 
-                pieces.push(null); // Place holder for pieces array
+                pieces.push(null);
             }
         }
 
@@ -290,38 +267,33 @@
             const geometry = new THREE.BufferGeometry();
             const vertices = [];
             for ( let i = 0; i < 2000; i ++ ) {
-                vertices.push( THREE.MathUtils.randFloatSpread( 200 ) ); // x
-                vertices.push( THREE.MathUtils.randFloatSpread( 200 ) ); // y
-                vertices.push( THREE.MathUtils.randFloatSpread( 200 ) ); // z
+                vertices.push( THREE.MathUtils.randFloatSpread( 200 ) );
+                vertices.push( THREE.MathUtils.randFloatSpread( 200 ) );
+                vertices.push( THREE.MathUtils.randFloatSpread( 200 ) );
             }
             geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
             const particles = new THREE.Points( geometry, new THREE.PointsMaterial( { color: 0x888888, size: 0.5 } ) );
             scene.add( particles );
         }
 
-        // Convert Grid Index (0-24) to 3D Coord (x, z)
         function getCoord(idx) {
-            // 5x5 Grid. Spacing 3 units. Center at 0,0
             const row = Math.floor(idx / 5);
             const col = idx % 5;
             return { x: (col - 2) * 3, z: (row - 2) * 3 };
         }
 
         // --- GAMEPLAY VISUALS ---
-
         function spawnPiece(idx, type) {
             const pos = getCoord(idx);
             let mesh;
 
             if(type === TIGER) {
-                // Red Spiked Shape
                 const geo = new THREE.IcosahedronGeometry(0.8, 0);
                 const mat = new THREE.MeshStandardMaterial({ 
                     color: COL_TIGER, emissive: COL_TIGER, emissiveIntensity: 2, roughness: 0.2, metalness: 0.8 
                 });
                 mesh = new THREE.Mesh(geo, mat);
             } else {
-                // Cyan Cube
                 const geo = new THREE.BoxGeometry(1, 1, 1);
                 const mat = new THREE.MeshStandardMaterial({ 
                     color: COL_GOAT, emissive: COL_GOAT, emissiveIntensity: 1.5, transparent:true, opacity: 0.9
@@ -329,10 +301,8 @@
                 mesh = new THREE.Mesh(geo, mat);
             }
 
-            mesh.position.set(pos.x, 5, pos.z); // Start high (drop in)
+            mesh.position.set(pos.x, 5, pos.z); 
             mesh.userData = { id: idx, type: type };
-            
-            // Animation Drop Target
             mesh.targetY = 0.5;
             
             scene.add(mesh);
@@ -345,7 +315,6 @@
             pieces[to] = mesh;
             
             const target = getCoord(to);
-            // Setup simple lerp animation in update loop
             mesh.targetPos = { x: target.x, z: target.z };
             mesh.isMoving = true;
         }
@@ -366,7 +335,6 @@
                 const p = new THREE.Mesh(geo, mat);
                 p.position.copy(pos);
                 
-                // Random Velocity
                 p.vel = new THREE.Vector3(
                     (Math.random()-0.5)*0.5, 
                     (Math.random())*0.5, 
@@ -378,18 +346,15 @@
             }
         }
 
-        // --- CORE GAME LOGIC (Adapted from previous) ---
-        
+        // --- CORE GAME LOGIC ---
         window.startGame = function(mode) {
             gameMode = mode;
             document.getElementById('menu-modal').classList.remove('active');
             
-            // Reset Board
             board.fill(EMPTY);
             pieces.forEach(p => { if(p) scene.remove(p); });
             pieces.fill(null);
             
-            // Spawn Initial Tigers
             [0,4,20,24].forEach(i => { board[i]=TIGER; spawnPiece(i, TIGER); });
 
             turn = 'goat'; phase = 1; goatsPlaced = 0; goatsDead = 0;
@@ -403,16 +368,13 @@
 
         function onMouseClick(event) {
             if(gameOver || isWait) return;
-            if(gameMode === 'computer' && turn === 'tiger') return;
 
-            // Normalize Mouse
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
-            
-            // Intersect with Hitboxes (Nodes)
             const intersects = raycaster.intersectObjects(nodes);
+            
             if(intersects.length > 0) {
                 const idx = intersects[0].object.userData.index;
                 playSfx('select');
@@ -445,8 +407,6 @@
         }
 
         function executeAction(from, to, type, mid=null) {
-            history = { board:[...board], turn, phase, goatsPlaced, goatsDead, piecesState: JSON.stringify(board) }; // Simple snapshot
-
             if(type === 'place') {
                 board[to] = GOAT; goatsPlaced++;
                 if(goatsPlaced===20) phase=2;
@@ -467,7 +427,63 @@
             selectedIdx = null;
             clearHighlights();
             updateHUD();
-            startUndoTimer();
+
+            // CHECK WIN CONDITIONS IMMEDIATELY 
+            if (checkWinConditions()) return;
+
+            // Strict turn switching
+            turn = (turn === 'goat') ? 'tiger' : 'goat';
+            updateHUD();
+
+            // Trigger AI safely if it's PvE mode
+            if (gameMode === 'computer' && turn === 'tiger') {
+                isWait = true; // Block human clicks until AI is done
+                setTimeout(aiMove, 800);
+            } else {
+                isWait = false; // Give control back to player
+            }
+        }
+
+        function checkWinConditions() {
+            // Hunter Win
+            if (goatsDead >= 5) {
+                gameOver = true;
+                setTimeout(() => { 
+                    alert('HUNTERS (TIGERS) WIN! 5 Goats Eliminated.'); 
+                    showMenu(); 
+                }, 500);
+                return true;
+            }
+
+            // Defender Win
+            let tigers = board.map((v,i) => v === TIGER ? i : -1).filter(i => i !== -1);
+            if (tigers.length > 0) {
+                let trapped = true;
+                
+                for (let t of tigers) {
+                    let canMove = false;
+                    
+                    // Check adjacent empty spots
+                    ADJ[t].forEach(n => { if (board[n] === EMPTY) canMove = true; });
+                    
+                    // Check valid jumps
+                    for (let i = 0; i < 25; i++) {
+                        if (board[i] === EMPTY && getJump(t, i) !== -1) canMove = true;
+                    }
+                    
+                    if (canMove) { trapped = false; break; }
+                }
+
+                if (trapped) {
+                    gameOver = true;
+                    setTimeout(() => { 
+                        alert('DEFENDERS (GOATS) WIN! All Tigers are fully trapped!'); 
+                        showMenu(); 
+                    }, 500);
+                    return true;
+                }
+            }
+            return false;
         }
 
         function getJump(f, t) {
@@ -480,78 +496,35 @@
             return -1;
         }
 
-        // --- UNDO & TURN ---
-        function startUndoTimer() {
-            isWait = true;
-            document.getElementById('btn-undo').style.display = 'inline-block';
-            const bar = document.getElementById('undo-bar');
-            bar.style.transition = 'none'; bar.style.width = '100%';
-            setTimeout(()=>{ bar.style.transition = 'width 4s linear'; bar.style.width = '0%'; }, 50);
-            
-            undoTimer = setTimeout(finalizeTurn, 4000);
-        }
-
-        window.undoMove = function() {
-            clearTimeout(undoTimer);
-            isWait = false;
-            document.getElementById('btn-undo').style.display = 'none';
-            document.getElementById('undo-bar').style.width = '0%';
-
-            // Revert Logic
-            board = history.board;
-            turn = history.turn;
-            phase = history.phase;
-            goatsPlaced = history.goatsPlaced;
-            goatsDead = history.goatsDead;
-
-            // Revert Visuals (Brute force reset for simplicity)
-            pieces.forEach(p => { if(p) scene.remove(p); });
-            pieces.fill(null);
-            board.forEach((v, i) => { if(v!==EMPTY) spawnPiece(i, v); });
-
-            updateHUD();
-        }
-
-        function finalizeTurn() {
-            isWait = false;
-            document.getElementById('btn-undo').style.display = 'none';
-            
-            // Check Win
-            if(goatsDead >= 5) { alert('HUNTERS WIN'); showMenu(); return; }
-            // (Trapped logic omitted for brevity in 3D demo, relies on visual check)
-
-            turn = (turn==='goat')?'tiger':'goat';
-            updateHUD();
-            
-            if(gameMode === 'computer' && turn === 'tiger') setTimeout(aiMove, 1000);
-        }
-
+        // --- COMPUTER AI ---
         function aiMove() {
+            if (gameOver || turn !== 'tiger') return; // Absolute fail-safe
+
             let tigers = board.map((v,i)=>v===TIGER?i:-1).filter(i=>i!==-1);
-            // 1. Capture
+            
+            // 1. Capture if possible
             for(let t of tigers) {
                 for(let i=0; i<25; i++) {
                     if(board[i]===EMPTY) {
                         let m = getJump(t, i);
-                        if(m!==-1) {
+                        if(m !== -1) {
                             executeAction(t, i, 'eat', m);
-                            return; // AI commits instantly, wait period starts
+                            return; 
                         }
                     }
                 }
             }
-            // 2. Random
+            
+            // 2. Random valid move
             let moves = [];
             for(let t of tigers) {
                 ADJ[t].forEach(n=>{ if(board[n]===EMPTY) moves.push({f:t, t:n}); });
             }
+            
             if(moves.length>0) {
                 let mv = moves[Math.floor(Math.random()*moves.length)];
                 executeAction(mv.f, mv.t, 'move');
-            } else {
-                // Trapped or pass
-                finalizeTurn();
-            }
+            } 
         }
 
         // --- ANIMATION LOOP ---
@@ -559,18 +532,14 @@
             requestAnimationFrame(animate);
             controls.update();
 
-            // Animate Pieces (Drop in & Move)
             pieces.forEach(p => {
                 if(p) {
-                    // Hover effect
                     if(!p.isMoving) p.position.y += Math.sin(Date.now() * 0.003) * 0.002;
 
-                    // Drop In logic
                     if(p.position.y > 0.5 && !p.isMoving) {
                         p.position.y = THREE.MathUtils.lerp(p.position.y, 0.5, 0.1);
                     }
 
-                    // Move Logic
                     if(p.isMoving) {
                         p.position.x = THREE.MathUtils.lerp(p.position.x, p.targetPos.x, 0.1);
                         p.position.z = THREE.MathUtils.lerp(p.position.z, p.targetPos.z, 0.1);
@@ -579,14 +548,12 @@
                         }
                     }
                     
-                    // Rotate Tigers
                     if(p.userData.type === TIGER) {
                         p.rotation.x += 0.01; p.rotation.y += 0.01;
                     }
                 }
             });
 
-            // Animate Particles
             for(let i=particles.length-1; i>=0; i--) {
                 let p = particles[i];
                 p.position.add(p.vel);
